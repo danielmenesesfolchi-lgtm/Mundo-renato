@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mundo Renato</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Firebase compat (NO module, funciona en sandbox) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --cream:#FFF8F0;--pink:#FFD6E0;--blue:#C8E6FF;--mint:#C8F0E0;
+    --yellow:#FFF3C8;--purple:#E8D6FF;--peach:#FFE0C8;
+    --text:#5A4A5A;--soft:#9A8A9A;--white:#FFFFFF;--shadow:rgba(180,150,180,0.15);
+  }
+  body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  #app-loader{position:fixed;inset:0;background:linear-gradient(135deg,#FFD6E0,#C8E6FF);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;}
+  #app-loader .logo{font-size:48px;margin-bottom:12px;animation:pulse 1.2s infinite;}
+  #app-loader h2{font-size:22px;font-weight:800;color:#7A5A7A;}
+  #app-loader p{font-size:13px;color:#9A7A9A;margin-top:6px;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+  .header{background:linear-gradient(135deg,#FFD6E0 0%,#C8E6FF 100%);padding:18px 20px 14px;text-align:center;box-shadow:0 4px 20px var(--shadow);}
+  .header h1{font-size:26px;font-weight:800;color:#7A5A7A;letter-spacing:1px;}
+  .header p{font-size:13px;color:#9A7A9A;margin-top:2px;}
+  .cloud-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.5);border-radius:20px;padding:3px 10px;font-size:11px;color:#7A5A7A;font-weight:700;margin-top:6px;}
+  .cloud-dot{width:7px;height:7px;border-radius:50%;background:#5ACA8A;animation:blink 2s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .nav{display:flex;overflow-x:auto;gap:8px;padding:14px 14px 10px;scrollbar-width:none;background:var(--white);box-shadow:0 2px 10px var(--shadow);position:sticky;top:0;z-index:100;}
+  .nav::-webkit-scrollbar{display:none;}
+  .nav-btn{flex-shrink:0;padding:8px 14px;border-radius:20px;border:2px solid transparent;background:var(--cream);color:var(--soft);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .nav-btn.active,.nav-btn:hover{background:linear-gradient(135deg,#FFD6E0,#C8E6FF);color:#7A5A7A;border-color:#FFB6C8;}
+  .section{display:none;padding:16px;max-width:700px;margin:0 auto;}
+  .section.active{display:block;}
+  .card{background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 16px var(--shadow);}
+  .card-title{font-size:16px;font-weight:800;color:#7A5A7A;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .card-title span{display:flex;align-items:center;gap:8px;}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+  .dash-tile{border-radius:18px;padding:16px;text-align:center;}
+  .dash-tile .emoji{font-size:28px;}
+  .dash-tile .val{font-size:20px;font-weight:800;color:#7A5A7A;margin:4px 0;}
+  .dash-tile .lbl{font-size:11px;color:var(--soft);font-weight:600;}
+  .t1{background:var(--pink);}.t2{background:var(--blue);}.t3{background:var(--mint);}.t4{background:var(--purple);}.t5{background:var(--yellow);}.t6{background:var(--peach);}
+  .form-group{margin-bottom:12px;}
+  label{font-size:13px;font-weight:700;color:var(--soft);display:block;margin-bottom:5px;}
+  input,select,textarea{width:100%;padding:10px 14px;border-radius:12px;border:2px solid #F0E0F0;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;transition:border 0.2s;}
+  input:focus,select:focus,textarea:focus{border-color:#FFB6C8;}
+  textarea{resize:vertical;min-height:70px;}
+  .upload-area{border:2px dashed #FFB6C8;border-radius:14px;padding:16px;text-align:center;cursor:pointer;background:#FFF0F5;transition:all 0.2s;}
+  .upload-area:hover{background:var(--pink);}
+  .upload-area input[type=file]{display:none;}
+  .upload-area .up-icon{font-size:28px;}
+  .upload-area p{font-size:12px;color:var(--soft);margin-top:4px;font-weight:600;}
+  .thumb{width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-top:8px;display:none;}
+  .btn{width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#FFB6C8,#A8D8FF);color:#7A5A7A;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:opacity 0.2s,transform 0.1s;margin-top:4px;}
+  .btn:hover{opacity:0.9;transform:translateY(-1px);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+  .btn-sm{padding:9px 18px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .btn-pdf{background:linear-gradient(135deg,#C8F0E0,#A8D8FF);color:#4A7A6A;}
+  .list-item{background:var(--cream);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:background 0.2s;}
+  .list-item.clickable{cursor:pointer;}
+  .list-item.clickable:hover{background:var(--pink);}
+  .item-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .item-info{flex:1;min-width:0;}
+  .item-name{font-size:14px;font-weight:700;}
+  .item-sub{font-size:12px;color:var(--soft);margin-top:2px;}
+  .item-amount{font-size:15px;font-weight:800;color:#7A5A7A;white-space:nowrap;}
+  .item-receipt{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;border:2px solid #FFD6E0;}
+  .delete-btn{background:none;border:none;font-size:16px;cursor:pointer;color:#CCA0CC;padding:4px;flex-shrink:0;}
+  .section-label{font-size:15px;font-weight:800;color:#7A5A7A;margin:16px 0 8px;}
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:2px solid var(--pink);cursor:pointer;transition:transform 0.2s;}
+  .photo-thumb:hover{transform:scale(1.03);}
+  .doc-item{background:var(--cream);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+  .doc-info{flex:1;}
+  .doc-name{font-size:14px;font-weight:700;}
+  .doc-sub{font-size:12px;color:var(--soft);}
+  .hito-item{background:var(--cream);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+  .hito-badge{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+  .hito-info{flex:1;}
+  .hito-name{font-size:14px;font-weight:800;}
+  .hito-fecha{font-size:12px;color:var(--soft);margin-top:2px;}
+  .hito-nota{font-size:12px;color:#8A7A8A;margin-top:4px;font-style:italic;}
+  .filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .filter-btn{padding:6px 14px;border-radius:20px;border:2px solid #F0E0F0;background:var(--cream);color:var(--soft);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+  .filter-btn.active{background:var(--pink);border-color:#FFB6C8;color:#7A5A7A;}
+  .resumen-bar{background:var(--cream);border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .rb-cat{font-size:13px;font-weight:700;}
+  .rb-amt{font-size:14px;font-weight:800;color:#7A5A7A;}
+  .bar-fill-bg{height:6px;border-radius:3px;background:#F0E0F0;margin-top:5px;}
+  .bar-fill{height:6px;border-radius:3px;background:linear-gradient(90deg,#FFB6C8,#A8D8FF);}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(90,60,90,0.4);z-index:200;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--white);border-radius:24px;padding:24px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(90,60,90,0.25);}
+  .modal-title{font-size:18px;font-weight:800;color:#7A5A7A;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+  .close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--soft);}
+  .receipt-big{width:100%;border-radius:14px;margin-bottom:12px;border:2px solid var(--pink);}
+  .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;}
+  .lightbox.open{display:flex;}
+  .lightbox img{max-width:95vw;max-height:90vh;border-radius:16px;}
+  .lightbox-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;}
+  .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--pink);color:#7A5A7A;margin-right:4px;}
+  .empty{text-align:center;padding:30px 20px;color:var(--soft);}
+  .empty .e-icon{font-size:48px;margin-bottom:10px;}
+  .empty p{font-size:14px;font-weight:600;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7A5A7A;color:#fff;padding:12px 24px;border-radius:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;z-index:500;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .ring{display:inline-block;width:14px;height:14px;border:2px solid #FFB6C8;border-top-color:#7A5A7A;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px;}
+</style>
+</head>
+<body>
+
+<div id="app-loader">
+  <div class="logo">🍼</div>
+  <h2>Mundo Renato</h2>
+  <p>Conectando con la nube… ☁️</p>
+</div>
+
+<div id="app-main" style="display:none">
+<div class="header">
+  <div style="font-size:18px;letter-spacing:4px">🌟 🍼 🌟</div>
+  <h1>Mundo Renato</h1>
+  <p>Todo el amor en un lugar 💕</p>
+  <div class="cloud-badge"><div class="cloud-dot"></div> Firebase · En tiempo real</div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('dashboard',this)">🏠 Inicio</button>
+  <button class="nav-btn" onclick="showSection('gastos',this)">💰 Gastos</button>
+  <button class="nav-btn" onclick="showSection('citas',this)">🏥 Citas</button>
+  <button class="nav-btn" onclick="showSection('docs',this)">📄 Registros</button>
+  <button class="nav-btn" onclick="showSection('fotos',this)">📸 Fotos</button>
+  <button class="nav-btn" onclick="showSection('hitos',this)">👣 Hitos</button>
+  <button class="nav-btn" onclick="showSection('crecimiento',this)">📈 Crecimiento</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+  <div class="dash-grid">
+    <div class="dash-tile t1"><div class="emoji">💸</div><div class="val" id="dash-total">—</div><div class="lbl">Gasto este mes</div></div>
+    <div class="dash-tile t2"><div class="emoji">🏥</div><div class="val" id="dash-citas">—</div><div class="lbl">Citas</div></div>
+    <div class="dash-tile t3"><div class="emoji">📄</div><div class="val" id="dash-docs">—</div><div class="lbl">Documentos</div></div>
+    <div class="dash-tile t4"><div class="emoji">📸</div><div class="val" id="dash-fotos">—</div><div class="lbl">Fotos</div></div>
+    <div class="dash-tile t5"><div class="emoji">👣</div><div class="val" id="dash-hitos">—</div><div class="lbl">Hitos</div></div>
+    <div class="dash-tile t6"><div class="emoji">📈</div><div class="val" id="dash-medidas">—</div><div class="lbl">Medidas</div></div>
+  </div>
+  <div class="card"><div class="card-title"><span>💰 Últimos gastos</span></div><div id="dash-gastos-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+  <div class="card"><div class="card-title"><span>🏥 Próxima cita</span></div><div id="dash-proxima"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+  <div class="card"><div class="card-title"><span>👣 Último hito</span></div><div id="dash-hito-last"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+</div>
+
+<!-- GASTOS -->
+<div id="gastos" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Nuevo Gasto</span></div>
+    <div class="form-group"><label>Categoría</label>
+      <select id="g-cat"><option>🍼 Insumos</option><option>🏥 Médico</option><option>🎉 Fiesta</option><option>👗 Ropa</option><option>🧸 Juguetes</option><option>🍼 Alimentación</option><option>📦 Otros</option></select>
+    </div>
+    <div class="form-group"><label>Descripción</label><input type="text" id="g-desc" placeholder="Ej: Pañales talla M"></div>
+    <div class="form-group"><label>Monto ($)</label><input type="number" id="g-monto" placeholder="0"></div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="g-fecha"></div>
+    <div class="form-group"><label>Foto de la boleta</label>
+      <div class="upload-area" onclick="document.getElementById('g-boleta').click()">
+        <input type="file" id="g-boleta" accept="image/*" onchange="previewImg(this,'g-thumb',function(d){boletaData=d})">
+        <div class="up-icon">📷</div><p>Toca para subir foto de la boleta</p>
+        <img id="g-thumb" class="thumb">
+      </div>
+    </div>
+    <button class="btn" id="g-save-btn" onclick="agregarGasto()">💾 Guardar Gasto</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>📋 Historial</span><button class="btn-sm btn-pdf" onclick="exportarPDF()">📥 PDF</button></div>
+    <div class="filter-row" id="g-filters"></div>
+    <div id="gastos-resumen"></div>
+    <div id="gastos-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div>
+  </div>
+</div>
+
+<!-- CITAS -->
+<div id="citas" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Nueva Cita</span></div>
+    <div class="form-group"><label>Tipo</label>
+      <select id="c-tipo"><option>👶 Control de bebé</option><option>💉 Vacuna</option><option>🔬 Examen</option><option>👁️ Especialista</option><option>🦷 Dental</option><option>📋 Otro</option></select>
+    </div>
+    <div class="form-group"><label>Doctor / Clínica</label><input type="text" id="c-doctor" placeholder="Ej: Dr. García"></div>
+    <div class="form-group"><label>Fecha y hora</label><input type="datetime-local" id="c-fecha"></div>
+    <div class="form-group"><label>Notas</label><textarea id="c-notas" placeholder="Observaciones..."></textarea></div>
+    <button class="btn" onclick="agregarCita()">💾 Guardar Cita</button>
+  </div>
+  <div class="card"><div class="card-title"><span>📅 Historial</span></div><div id="citas-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+</div>
+
+<!-- DOCS -->
+<div id="docs" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Subir Documento</span></div>
+    <div class="form-group"><label>Tipo</label>
+      <select id="d-tipo"><option>💉 Carnet de vacunas</option><option>🔬 Examen</option><option>💊 Receta médica</option><option>📋 Informe médico</option><option>🏥 Alta hospitalaria</option><option>📄 Otro</option></select>
+    </div>
+    <div class="form-group"><label>Nombre</label><input type="text" id="d-nombre" placeholder="Ej: Vacuna triple viral"></div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="d-fecha"></div>
+    <div class="form-group"><label>Archivo</label>
+      <div class="upload-area" onclick="document.getElementById('d-file').click()">
+        <input type="file" id="d-file" accept="image/*" onchange="previewDoc(this)">
+        <div class="up-icon">📎</div><p>Imagen</p>
+        <img id="d-thumb" class="thumb">
+      </div>
+    </div>
+    <button class="btn" onclick="agregarDoc()">💾 Guardar</button>
+  </div>
+  <div class="card"><div class="card-title"><span>📂 Mis Registros</span></div><div id="docs-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+</div>
+
+<!-- FOTOS -->
+<div id="fotos" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Agregar Foto</span></div>
+    <div class="form-group"><label>Sección</label>
+      <select id="f-seccion"><option>🌱 Primeros días</option><option>🎂 Cumpleaños</option><option>🎉 Fiestas</option><option>👣 Hitos</option><option>🌟 Momentos especiales</option><option>🏖️ Paseos</option></select>
+    </div>
+    <div class="form-group"><label>Descripción</label><input type="text" id="f-desc" placeholder="Ej: Primera sonrisa"></div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="f-fecha"></div>
+    <div class="form-group"><label>Foto</label>
+      <div class="upload-area" onclick="document.getElementById('f-file').click()">
+        <input type="file" id="f-file" accept="image/*" onchange="previewImg(this,'f-thumb',function(d){fotoData=d})">
+        <div class="up-icon">🖼️</div><p>Toca para subir foto</p>
+        <img id="f-thumb" class="thumb">
+      </div>
+    </div>
+    <button class="btn" onclick="agregarFoto()">💾 Guardar Foto</button>
+  </div>
+  <div id="fotos-sections"></div>
+</div>
+
+<!-- HITOS -->
+<div id="hitos" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Registrar Hito</span></div>
+    <div class="form-group"><label>Hito</label>
+      <select id="h-tipo">
+        <option>😊 Primera sonrisa</option><option>👀 Primer seguimiento visual</option>
+        <option>🙃 Primer volteo</option><option>🤲 Primer agarre de objeto</option>
+        <option>🪑 Primer sentarse solo</option><option>🍽️ Primera comida sólida</option>
+        <option>🦷 Primer diente</option><option>🐛 Primer gateo</option>
+        <option>🚶 Primeros pasos</option><option>💬 Primera palabra</option>
+        <option>🎂 Primer cumpleaños</option><option>✂️ Primer corte de pelo</option>
+        <option>🛁 Primer baño en tina grande</option><option>📚 Primer libro favorito</option>
+        <option>🌟 Otro hito especial</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Descripción personalizada</label><input type="text" id="h-desc" placeholder="Opcional"></div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="h-fecha"></div>
+    <div class="form-group"><label>Edad de Renato</label><input type="text" id="h-edad" placeholder="Ej: 3 meses y 2 días"></div>
+    <div class="form-group"><label>Nota especial 💕</label><textarea id="h-nota" placeholder="Cuéntanos cómo fue ese momento..."></textarea></div>
+    <button class="btn" onclick="agregarHito()">💾 Guardar Hito</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>👣 Hitos de Renato</span><button class="btn-sm btn-pdf" onclick="exportarHitosPDF()">📥 PDF</button></div>
+    <div id="hitos-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div>
+  </div>
+</div>
+
+<!-- CRECIMIENTO -->
+<div id="crecimiento" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Registrar Medidas</span></div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="cr-fecha"></div>
+    <div class="form-group"><label>Edad de Renato</label><input type="text" id="cr-edad" placeholder="Ej: 2 meses"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="form-group"><label>Peso (kg)</label><input type="number" id="cr-peso" step="0.01" placeholder="3.5"></div>
+      <div class="form-group"><label>Talla (cm)</label><input type="number" id="cr-talla" step="0.1" placeholder="50"></div>
+      <div class="form-group"><label>Cráneo (cm)</label><input type="number" id="cr-craneo" step="0.1" placeholder="34"></div>
+    </div>
+    <div class="form-group"><label>Notas</label><input type="text" id="cr-nota" placeholder="Ej: Control 2 meses"></div>
+    <button class="btn" onclick="agregarMedida()">💾 Guardar Medidas</button>
+  </div>
+  <div id="cr-resumen"></div>
+  <div class="card">
+    <div class="card-title"><span>📊 Evolución</span></div>
+    <div class="filter-row">
+      <button class="filter-btn active" id="cr-btn-peso" onclick="setCrFilter('peso')">⚖️ Peso</button>
+      <button class="filter-btn" id="cr-btn-talla" onclick="setCrFilter('talla')">📏 Talla</button>
+      <button class="filter-btn" id="cr-btn-craneo" onclick="setCrFilter('craneo')">🧠 Cráneo</button>
+    </div>
+    <canvas id="cr-chart" style="width:100%;max-height:260px"></canvas>
+    <div id="cr-empty" class="empty" style="display:none"><div class="e-icon">📈</div><p>Agrega al menos 2 registros</p></div>
+  </div>
+  <div class="card"><div class="card-title"><span>📋 Historial</span></div><div id="cr-list"></div></div>
+</div>
+</div><!-- /app-main -->
+
+<div class="modal-overlay" id="modal-gasto">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-g-titulo"></span><button class="close-btn" onclick="closeModal('modal-gasto')">✕</button></div>
+    <img id="modal-g-img" class="receipt-big" style="display:none">
+    <div id="modal-g-body"></div>
+  </div>
+</div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lb-img" src="">
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Firebase compat init ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCy0DxJrE4pNTG4RIZuclVJkkmg1fgSk5g",
+  authDomain: "mundo-renato.firebaseapp.com",
+  projectId: "mundo-renato",
+  storageBucket: "mundo-renato.firebasestorage.app",
+  messagingSenderId: "1087073503065",
+  appId: "1:1087073503065:web:864e1a928bdd9514acee48"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ── Cache & state ──
+const cache = {gastos:[],citas:[],docs:[],fotos:[],hitos:[],medidas:[]};
+var boletaData=null, docData=null, fotoData=null;
+var activeFilter='Todos', crFilter='peso';
+
+// ── Helpers ──
+function fmtMoney(n){return '$'+Number(n).toLocaleString('es-CL');}
+function fmtDate(d){if(!d)return '';var p=d.split('T')[0].split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function setToday(id){var e=document.getElementById(id);if(e)e.value=new Date().toISOString().split('T')[0];}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+function previewImg(input,thumbId,cb){
+  if(!input.files[0])return;
+  var r=new FileReader();
+  r.onload=function(e){cb(e.target.result);var t=document.getElementById(thumbId);t.src=e.target.result;t.style.display='block';};
+  r.readAsDataURL(input.files[0]);
+}
+function previewDoc(input){
+  if(!input.files[0])return;
+  var r=new FileReader();
+  r.onload=function(e){docData=e.target.result;var t=document.getElementById('d-thumb');t.src=docData;t.style.display='block';};
+  r.readAsDataURL(input.files[0]);
+}
+
+// ── Loader ──
+var loaderHidden=false;
+function hideLoader(){
+  if(loaderHidden)return;
+  loaderHidden=true;
+  document.getElementById('app-loader').style.display='none';
+  document.getElementById('app-main').style.display='block';
+}
+setTimeout(function(){if(!loaderHidden){hideLoader();showToast('⚠️ Revisa conexión o reglas de Firestore');}},6000);
+
+// ── Nav ──
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='dashboard')renderDashboard();
+  if(id==='crecimiento')renderCrecimiento();
+}
+
+// ── Real-time listeners ──
+function listen(col,cacheKey,sortFn,renderFns){
+  db.collection(col).orderBy('ts','desc').onSnapshot(function(snap){
+    hideLoader();
+    cache[cacheKey]=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(sortFn)cache[cacheKey].sort(sortFn);
+    renderFns.forEach(function(fn){fn();});
+  },function(){hideLoader();});
+}
+
+listen('gastos','gastos',null,[renderGastos,renderDashboard]);
+listen('citas','citas',function(a,b){return a.fecha>b.fecha?1:-1;},[renderCitas,renderDashboard]);
+listen('docs','docs',null,[renderDocs]);
+listen('fotos','fotos',null,[renderFotos]);
+listen('hitos','hitos',null,[renderHitos,renderDashboard]);
+listen('medidas','medidas',function(a,b){return a.fecha>b.fecha?1:-1;},[renderCrecimiento]);
+
+// ── GASTOS ──
+function agregarGasto(){
+  var desc=document.getElementById('g-desc').value.trim();
+  var monto=document.getElementById('g-monto').value;
+  var fecha=document.getElementById('g-fecha').value;
+  var cat=document.getElementById('g-cat').value;
+  if(!desc||!monto)return alert('Completa descripción y monto 💕');
+  var btn=document.getElementById('g-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="ring"></span> Guardando…';
+  db.collection('gastos').add({cat:cat,desc:desc,monto:Number(monto),fecha:fecha,boleta:boletaData||null,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){
+    boletaData=null;
+    ['g-desc','g-monto','g-fecha'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('g-thumb').style.display='none';
+    document.getElementById('g-boleta').value='';
+    showToast('💰 Gasto guardado ☁️');
+  }).catch(function(e){alert('Error: '+e.message);})
+  .finally(function(){btn.disabled=false;btn.innerHTML='💾 Guardar Gasto';});
+}
+
+function setFilter(cat){activeFilter=cat;renderGastos();}
+
+function renderGastos(){
+  var cats=['Todos','🍼 Insumos','🏥 Médico','🎉 Fiesta','👗 Ropa','🧸 Juguetes','🍼 Alimentación','📦 Otros'];
+  document.getElementById('g-filters').innerHTML=cats.map(function(c){return '<button class="filter-btn'+(c===activeFilter?' active':'')+'" onclick="setFilter(\''+c+'\')">'+c+'</button>';}).join('');
+  var filtered=activeFilter==='Todos'?cache.gastos:cache.gastos.filter(function(g){return g.cat===activeFilter;});
+  var totPorCat={};
+  cache.gastos.forEach(function(g){totPorCat[g.cat]=(totPorCat[g.cat]||0)+g.monto;});
+  var grand=Object.values(totPorCat).reduce(function(a,b){return a+b;},0)||1;
+  document.getElementById('gastos-resumen').innerHTML=Object.entries(totPorCat).sort(function(a,b){return b[1]-a[1];}).map(function(e){var c=e[0],t=e[1];return '<div class="resumen-bar"><div style="flex:1"><div class="rb-cat">'+c+'</div><div class="bar-fill-bg"><div class="bar-fill" style="width:'+Math.round(t/grand*100)+'%"></div></div></div><div class="rb-amt">'+fmtMoney(t)+'</div></div>';}).join('');
+  var el=document.getElementById('gastos-list');
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="e-icon">💸</div><p>Sin gastos aún</p></div>';return;}
+  el.innerHTML=filtered.map(function(g){return '<div class="list-item clickable" onclick="verGasto(\''+g.id+'\')"><div class="item-icon" style="background:var(--yellow)">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+g.desc+'</div><div class="item-sub">'+g.cat.split(' ').slice(1).join(' ')+' · '+fmtDate(g.fecha)+'</div></div><div class="item-amount">'+fmtMoney(g.monto)+'</div>'+(g.boleta?'<img class="item-receipt" src="'+g.boleta+'">':'')+'<button class="delete-btn" onclick="event.stopPropagation();eliminar(\'gastos\',\''+g.id+'\')">🗑️</button></div>';}).join('');
+}
+
+function verGasto(id){
+  var g=cache.gastos.find(function(x){return x.id===id;});if(!g)return;
+  document.getElementById('modal-g-titulo').textContent=g.desc;
+  var img=document.getElementById('modal-g-img');
+  if(g.boleta){img.src=g.boleta;img.style.display='block';}else{img.style.display='none';}
+  document.getElementById('modal-g-body').innerHTML='<div style="margin-bottom:8px"><span class="tag">'+g.cat+'</span></div><p><strong>Monto:</strong> '+fmtMoney(g.monto)+'</p><p><strong>Fecha:</strong> '+fmtDate(g.fecha)+'</p>'+(g.boleta?'':'<p style="color:var(--soft);font-size:13px;margin-top:8px">Sin boleta adjunta</p>');
+  document.getElementById('modal-gasto').classList.add('open');
+}
+
+// ── CITAS ──
+function agregarCita(){
+  var doctor=document.getElementById('c-doctor').value.trim();
+  var fecha=document.getElementById('c-fecha').value;
+  var tipo=document.getElementById('c-tipo').value;
+  var notas=document.getElementById('c-notas').value;
+  if(!doctor||!fecha)return alert('Completa doctor y fecha 💕');
+  db.collection('citas').add({tipo:tipo,doctor:doctor,fecha:fecha,notas:notas,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){['c-doctor','c-notas'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('c-fecha').value='';showToast('🏥 Cita guardada ☁️');});
+}
+
+function renderCitas(){
+  var el=document.getElementById('citas-list');
+  if(!cache.citas.length){el.innerHTML='<div class="empty"><div class="e-icon">🏥</div><p>Sin citas registradas</p></div>';return;}
+  el.innerHTML=cache.citas.map(function(c){return '<div class="list-item"><div class="item-icon" style="background:var(--blue)">'+c.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+c.doctor+'</div><div class="item-sub">'+c.tipo+' · '+fmtDate(c.fecha)+'</div>'+(c.notas?'<div class="item-sub" style="margin-top:4px">'+c.notas.substring(0,60)+(c.notas.length>60?'...':'')+'</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'citas\',\''+c.id+'\')">🗑️</button></div>';}).join('');
+}
+
+// ── DOCS ──
+function agregarDoc(){
+  var nombre=document.getElementById('d-nombre').value.trim();
+  var fecha=document.getElementById('d-fecha').value;
+  var tipo=document.getElementById('d-tipo').value;
+  if(!nombre)return alert('Agrega un nombre 💕');
+  db.collection('docs').add({tipo:tipo,nombre:nombre,fecha:fecha,data:docData||null,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){docData=null;document.getElementById('d-nombre').value='';document.getElementById('d-fecha').value='';document.getElementById('d-thumb').style.display='none';document.getElementById('d-file').value='';showToast('📄 Documento guardado ☁️');});
+}
+
+function renderDocs(){
+  var el=document.getElementById('docs-list');
+  if(!cache.docs.length){el.innerHTML='<div class="empty"><div class="e-icon">📄</div><p>Sin documentos aún</p></div>';return;}
+  el.innerHTML=cache.docs.map(function(d){return '<div class="doc-item">'+(d.data?'<img src="'+d.data+'" style="width:44px;height:44px;border-radius:10px;object-fit:cover;border:2px solid var(--pink)">':'<div style="font-size:30px">'+d.tipo.split(' ')[0]+'</div>')+'<div class="doc-info"><div class="doc-name">'+d.nombre+'</div><div class="doc-sub">'+d.tipo+' · '+fmtDate(d.fecha)+'</div>'+(d.data?'<div style="font-size:11px;color:#AAA;cursor:pointer" onclick="openLightbox(\''+d.data.replace(/'/g,"\\'")+'\')" >👁️ Ver</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'docs\',\''+d.id+'\')">🗑️</button></div>';}).join('');
+}
+
+// ── FOTOS ──
+function agregarFoto(){
+  var desc=document.getElementById('f-desc').value.trim();
+  var fecha=document.getElementById('f-fecha').value;
+  var seccion=document.getElementById('f-seccion').value;
+  if(!fotoData)return alert('Selecciona una foto 📸');
+  db.collection('fotos').add({seccion:seccion,desc:desc,fecha:fecha,data:fotoData,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){fotoData=null;['f-desc','f-fecha'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('f-thumb').style.display='none';document.getElementById('f-file').value='';showToast('📸 Foto guardada ☁️');});
+}
+
+function renderFotos(){
+  var el=document.getElementById('fotos-sections');
+  var secs=['🌱 Primeros días','🎂 Cumpleaños','🎉 Fiestas','👣 Hitos','🌟 Momentos especiales','🏖️ Paseos'];
+  var html=secs.map(function(s){
+    var fs=cache.fotos.filter(function(f){return f.seccion===s;});
+    if(!fs.length)return '';
+    return '<div class="section-label">'+s+'</div><div class="photo-grid">'+fs.map(function(f){return '<img class="photo-thumb" src="'+f.data+'" title="'+(f.desc||'')+'" onclick="openLightbox(\''+f.data.replace(/'/g,"\\'")+'\')">'; }).join('')+'</div>';
+  }).join('');
+  el.innerHTML=html||'<div class="card"><div class="empty"><div class="e-icon">📸</div><p>¡Agrega el primer recuerdo de Renato!</p></div></div>';
+}
+
+// ── HITOS ──
+var HCOLS=['#FFD6E0','#C8E6FF','#C8F0E0','#FFF3C8','#E8D6FF','#FFE0C8'];
+function agregarHito(){
+  var tipo=document.getElementById('h-tipo').value;
+  var desc=document.getElementById('h-desc').value.trim();
+  var fecha=document.getElementById('h-fecha').value;
+  var edad=document.getElementById('h-edad').value.trim();
+  var nota=document.getElementById('h-nota').value.trim();
+  if(!fecha)return alert('Agrega la fecha 💕');
+  db.collection('hitos').add({tipo:tipo,desc:desc,fecha:fecha,edad:edad,nota:nota,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){['h-desc','h-fecha','h-edad','h-nota'].forEach(function(id){document.getElementById(id).value='';});showToast('👣 Hito guardado ☁️');});
+}
+
+function renderHitos(){
+  var el=document.getElementById('hitos-list');
+  if(!cache.hitos.length){el.innerHTML='<div class="empty"><div class="e-icon">👣</div><p>¡Registra el primer hito de Renato!</p></div>';return;}
+  el.innerHTML=cache.hitos.map(function(h,i){return '<div class="hito-item"><div class="hito-badge" style="background:'+HCOLS[i%HCOLS.length]+'">'+h.tipo.split(' ')[0]+'</div><div class="hito-info"><div class="hito-name">'+(h.desc||h.tipo.split(' ').slice(1).join(' '))+'</div><div class="hito-fecha">📅 '+fmtDate(h.fecha)+(h.edad?' · '+h.edad:'')+'</div>'+(h.nota?'<div class="hito-nota">"'+h.nota+'"</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'hitos\',\''+h.id+'\')">🗑️</button></div>';}).join('');
+}
+
+// ── CRECIMIENTO ──
+function agregarMedida(){
+  var fecha=document.getElementById('cr-fecha').value;
+  var edad=document.getElementById('cr-edad').value.trim();
+  var peso=parseFloat(document.getElementById('cr-peso').value)||null;
+  var talla=parseFloat(document.getElementById('cr-talla').value)||null;
+  var craneo=parseFloat(document.getElementById('cr-craneo').value)||null;
+  var nota=document.getElementById('cr-nota').value.trim();
+  if(!fecha)return alert('Agrega la fecha 💕');
+  if(!peso&&!talla&&!craneo)return alert('Agrega al menos una medida 💕');
+  db.collection('medidas').add({fecha:fecha,edad:edad,peso:peso,talla:talla,craneo:craneo,nota:nota,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){['cr-fecha','cr-edad','cr-peso','cr-talla','cr-craneo','cr-nota'].forEach(function(id){document.getElementById(id).value='';});setToday('cr-fecha');showToast('📈 Medida guardada ☁️');});
+}
+
+function setCrFilter(f){
+  crFilter=f;
+  ['peso','talla','craneo'].forEach(function(k){document.getElementById('cr-btn-'+k).classList.toggle('active',k===f);});
+  dibujarGrafica();
+}
+
+function renderCrecimiento(){
+  var sorted=cache.medidas.slice().sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+  var last=sorted[sorted.length-1];
+  var resEl=document.getElementById('cr-resumen');
+  if(last){
+    var prev=sorted[sorted.length-2];
+    var dp=prev&&last.peso&&prev.peso?(last.peso-prev.peso).toFixed(2):null;
+    var dt=prev&&last.talla&&prev.talla?(last.talla-prev.talla).toFixed(1):null;
+    resEl.innerHTML='<div class="card" style="background:linear-gradient(135deg,var(--mint),var(--blue));margin-bottom:14px"><div class="card-title"><span>📌 Última medida'+(last.edad?' · '+last.edad:'')+'</span><span style="font-size:12px;color:var(--soft)">'+fmtDate(last.fecha)+'</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">'+(last.peso?'<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:10px"><div style="font-size:22px">⚖️</div><div style="font-size:18px;font-weight:800;color:#5A7A5A">'+last.peso+' kg</div><div style="font-size:11px;color:var(--soft)">Peso'+(dp?'<span style="color:'+(dp>0?'#3A8A5A':'#8A3A3A')+'">'+(dp>0?'+':'')+dp+'kg</span>':'')+'</div></div>':'')+(last.talla?'<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:10px"><div style="font-size:22px">📏</div><div style="font-size:18px;font-weight:800;color:#5A5A7A">'+last.talla+' cm</div><div style="font-size:11px;color:var(--soft)">Talla'+(dt?'<span style="color:'+(dt>0?'#3A5A8A':'#8A3A3A')+'">'+(dt>0?'+':'')+dt+'cm</span>':'')+'</div></div>':'')+(last.craneo?'<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:10px"><div style="font-size:22px">🧠</div><div style="font-size:18px;font-weight:800;color:#7A5A7A">'+last.craneo+' cm</div><div style="font-size:11px;color:var(--soft)">Cráneo</div></div>':'')+'</div>'+(last.nota?'<div style="font-size:12px;color:#6A8A7A;margin-top:10px;font-style:italic">📝 '+last.nota+'</div>':'')+'</div>';
+  } else {resEl.innerHTML='';}
+  dibujarGrafica();
+  var el=document.getElementById('cr-list');
+  if(!sorted.length){el.innerHTML='<div class="empty"><div class="e-icon">📏</div><p>Sin medidas registradas</p></div>';return;}
+  el.innerHTML=sorted.slice().reverse().map(function(m){return '<div class="list-item"><div class="item-icon" style="background:var(--mint);font-size:18px">📅</div><div class="item-info"><div class="item-name">'+fmtDate(m.fecha)+(m.edad?' · '+m.edad:'')+'</div><div class="item-sub">'+(m.peso?'⚖️ '+m.peso+' kg  ':'')+( m.talla?'📏 '+m.talla+' cm  ':'')+( m.craneo?'🧠 '+m.craneo+' cm':'')+'</div>'+(m.nota?'<div class="item-sub">📝 '+m.nota+'</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'medidas\',\''+m.id+'\')">🗑️</button></div>';}).join('');
+}
+
+function dibujarGrafica(){
+  var canvas=document.getElementById('cr-chart');
+  var emptyEl=document.getElementById('cr-empty');
+  var sorted=cache.medidas.slice().sort(function(a,b){return a.fecha>b.fecha?1:-1;});
+  var datos=sorted.filter(function(m){return m[crFilter]!==null&&m[crFilter]!==undefined;});
+  if(datos.length<2){canvas.style.display='none';emptyEl.style.display='block';return;}
+  canvas.style.display='block';emptyEl.style.display='none';
+  var labels=datos.map(function(m){return fmtDate(m.fecha);});
+  var values=datos.map(function(m){return m[crFilter];});
+  var colors={peso:'#FFB6C8',talla:'#A8D8FF',craneo:'#C8A8FF'};
+  var fills={peso:'rgba(255,182,200,0.18)',talla:'rgba(168,216,255,0.18)',craneo:'rgba(200,168,255,0.18)'};
+  var units={peso:'kg',talla:'cm',craneo:'cm'};
+  var ctx=canvas.getContext('2d');
+  var pad={top:20,right:20,bottom:40,left:44};
+  var W=canvas.offsetWidth||300;canvas.width=W;canvas.height=220;
+  var H=canvas.height,cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
+  ctx.clearRect(0,0,W,H);
+  var minV=Math.min.apply(null,values)*0.97,maxV=Math.max.apply(null,values)*1.03,range=maxV-minV||1;
+  function toX(i){return pad.left+(i/(datos.length-1))*cW;}
+  function toY(v){return pad.top+cH-((v-minV)/range)*cH;}
+  ctx.strokeStyle='#F0E0F0';ctx.lineWidth=1;
+  for(var t=0;t<=4;t++){var y=pad.top+(t/4)*cH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cW,y);ctx.stroke();ctx.fillStyle='#BAA0BA';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText((maxV-(t/4)*range).toFixed(crFilter==='peso'?2:1),pad.left-4,y+4);}
+  ctx.beginPath();ctx.moveTo(toX(0),toY(values[0]));values.forEach(function(v,i){if(i>0)ctx.lineTo(toX(i),toY(v));});
+  ctx.lineTo(toX(values.length-1),pad.top+cH);ctx.lineTo(toX(0),pad.top+cH);ctx.closePath();ctx.fillStyle=fills[crFilter];ctx.fill();
+  ctx.beginPath();ctx.moveTo(toX(0),toY(values[0]));values.forEach(function(v,i){if(i>0)ctx.lineTo(toX(i),toY(v));});
+  ctx.strokeStyle=colors[crFilter];ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+  values.forEach(function(v,i){var x=toX(i),y=toY(v);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=colors[crFilter];ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle='#7A5A7A';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(v+units[crFilter],x,y-10);});
+  ctx.fillStyle='#BAA0BA';ctx.font='10px sans-serif';ctx.textAlign='center';
+  labels.forEach(function(l,i){ctx.fillText(l,toX(i),H-8);});
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  var now=new Date(),mes=now.getMonth(),año=now.getFullYear();
+  var totalMes=cache.gastos.filter(function(g){if(!g.fecha)return false;var d=new Date(g.fecha);return d.getMonth()===mes&&d.getFullYear()===año;}).reduce(function(a,g){return a+g.monto;},0);
+  document.getElementById('dash-total').textContent=fmtMoney(totalMes);
+  document.getElementById('dash-citas').textContent=cache.citas.length;
+  document.getElementById('dash-docs').textContent=cache.docs.length;
+  document.getElementById('dash-fotos').textContent=cache.fotos.length;
+  document.getElementById('dash-hitos').textContent=cache.hitos.length;
+  document.getElementById('dash-medidas').textContent=cache.medidas.length;
+  var gl=document.getElementById('dash-gastos-list');
+  gl.innerHTML=cache.gastos.slice(0,3).map(function(g){return '<div class="list-item" style="cursor:default;margin-bottom:8px"><div class="item-icon" style="background:var(--yellow);font-size:18px">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name" style="font-size:13px">'+g.desc+'</div><div class="item-sub">'+fmtDate(g.fecha)+'</div></div><div class="item-amount" style="font-size:14px">'+fmtMoney(g.monto)+'</div></div>';}).join('')||'<div class="empty"><div class="e-icon">🛒</div><p>Sin gastos aún</p></div>';
+  var prox=cache.citas.find(function(c){return new Date(c.fecha)>=now;});
+  document.getElementById('dash-proxima').innerHTML=prox?'<div class="list-item" style="cursor:default"><div class="item-icon" style="background:var(--blue)">'+prox.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+prox.doctor+'</div><div class="item-sub">'+prox.tipo+' · '+fmtDate(prox.fecha)+'</div></div></div>':'<div class="empty"><div class="e-icon">📅</div><p>Sin próximas citas</p></div>';
+  var uh=cache.hitos[0];
+  document.getElementById('dash-hito-last').innerHTML=uh?'<div class="hito-item"><div class="hito-badge" style="background:var(--purple)">'+uh.tipo.split(' ')[0]+'</div><div class="hito-info"><div class="hito-name">'+(uh.desc||uh.tipo.split(' ').slice(1).join(' '))+'</div><div class="hito-fecha">📅 '+fmtDate(uh.fecha)+(uh.edad?' · '+uh.edad:'')+'</div></div></div>':'<div class="empty"><div class="e-icon">👣</div><p>Sin hitos aún</p></div>';
+}
+
+// ── ELIMINAR ──
+function eliminar(col,id){
+  if(!confirm('¿Eliminar este registro? 🥺'))return;
+  db.collection(col).doc(id).delete().then(function(){showToast('🗑️ Eliminado');});
+}
+
+// ── PDF GASTOS ──
+function exportarPDF(){
+  var j=window.jspdf,pdoc=new j.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var W=210,margin=15,y=20;
+  pdoc.setFillColor(255,214,224);pdoc.rect(0,0,W,28,'F');
+  pdoc.setFontSize(20);pdoc.setFont('helvetica','bold');pdoc.setTextColor(122,90,122);pdoc.text('Mundo Renato',W/2,14,{align:'center'});
+  pdoc.setFontSize(10);pdoc.setFont('helvetica','normal');pdoc.setTextColor(154,122,154);pdoc.text('Historial de Gastos',W/2,21,{align:'center'});y=36;
+  pdoc.setFontSize(11);pdoc.setFont('helvetica','bold');pdoc.setTextColor(90,74,90);pdoc.text('Total: '+fmtMoney(cache.gastos.reduce(function(a,g){return a+g.monto;},0)),margin,y);
+  pdoc.setFontSize(9);pdoc.setFont('helvetica','normal');pdoc.setTextColor(154,138,154);pdoc.text(new Date().toLocaleDateString('es-CL'),W-margin,y,{align:'right'});y+=10;
+  var cols=[['Categoría',45],['Descripción',65],['Fecha',30],['Monto',30]],rowH=8;
+  pdoc.setFillColor(232,214,255);pdoc.rect(margin,y,W-margin*2,rowH,'F');
+  pdoc.setFontSize(9);pdoc.setFont('helvetica','bold');pdoc.setTextColor(90,74,90);
+  var cx=margin+2;cols.forEach(function(c){pdoc.text(c[0],cx,y+5.5);cx+=c[1];});y+=rowH;
+  var filtered=activeFilter==='Todos'?cache.gastos:cache.gastos.filter(function(g){return g.cat===activeFilter;});
+  filtered.forEach(function(g,idx){
+    if(y>270){pdoc.addPage();y=20;}
+    if(idx%2===0){pdoc.setFillColor(255,248,240);pdoc.rect(margin,y,W-margin*2,rowH,'F');}
+    pdoc.setFont('helvetica','normal');pdoc.setFontSize(8.5);pdoc.setTextColor(90,74,90);
+    cx=margin+2;[g.cat.split(' ').slice(1).join(' '),g.desc,fmtDate(g.fecha),fmtMoney(g.monto)].forEach(function(v,ci){pdoc.text(String(v).substring(0,ci===1?32:20),cx,y+5.5);cx+=cols[ci][1];});y+=rowH;
+  });
+  y+=6;pdoc.setDrawColor(255,182,200);pdoc.setLineWidth(0.4);pdoc.line(margin,y,W-margin,y);y+=6;
+  pdoc.setFont('helvetica','bold');pdoc.setFontSize(10);pdoc.setTextColor(122,90,122);
+  pdoc.text('Total: '+fmtMoney(filtered.reduce(function(a,g){return a+g.monto;},0)),W-margin,y,{align:'right'});
+  pdoc.save('MundoRenato_Gastos.pdf');
+}
+
+// ── PDF HITOS ──
+function exportarHitosPDF(){
+  var j=window.jspdf,pdoc=new j.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var W=210,margin=15,y=20;
+  pdoc.setFillColor(200,230,255);pdoc.rect(0,0,W,28,'F');
+  pdoc.setFontSize(20);pdoc.setFont('helvetica','bold');pdoc.setTextColor(90,122,154);pdoc.text('Mundo Renato',W/2,12,{align:'center'});
+  pdoc.setFontSize(11);pdoc.setFont('helvetica','normal');pdoc.setTextColor(100,140,180);pdoc.text('Hitos de Renato',W/2,20,{align:'center'});y=35;
+  pdoc.setFontSize(9);pdoc.setTextColor(154,138,154);pdoc.text(new Date().toLocaleDateString('es-CL')+' · '+cache.hitos.length+' hito(s)',W/2,y,{align:'center'});y+=12;
+  cache.hitos.forEach(function(h,i){
+    if(y>260){pdoc.addPage();y=20;}
+    var bg=[[255,214,224],[200,230,255],[200,240,224],[255,243,200],[232,214,255],[255,224,200]][i%6];
+    pdoc.setFillColor(bg[0],bg[1],bg[2]);pdoc.roundedRect(margin,y,W-margin*2,h.nota?28:22,4,4,'F');
+    var nombre=h.desc||h.tipo.split(' ').slice(1).join(' ');
+    pdoc.setFontSize(16);pdoc.text(h.tipo.split(' ')[0],margin+6,y+12);
+    pdoc.setFont('helvetica','bold');pdoc.setFontSize(11);pdoc.setTextColor(90,74,90);pdoc.text(nombre,margin+18,y+9);
+    pdoc.setFont('helvetica','normal');pdoc.setFontSize(9);pdoc.setTextColor(130,110,130);pdoc.text(fmtDate(h.fecha)+(h.edad?' · '+h.edad:''),margin+18,y+16);
+    if(h.nota){pdoc.setFontSize(8.5);pdoc.setTextColor(120,100,120);pdoc.text('"'+h.nota.substring(0,80)+(h.nota.length>80?'...:':'')+'"',margin+18,y+23);}
+    y+=(h.nota?32:26);
+  });
+  pdoc.save('MundoRenato_Hitos.pdf');
+}
+
+// ── INIT ──
+['g-fecha','d-fecha','f-fecha','h-fecha','cr-fecha'].forEach(setToday);
+document.getElementById('c-fecha').value=new Date().toISOString().slice(0,16);
+</script>
+</body>
+</html>
