@@ -131,7 +131,12 @@ textarea{resize:vertical;min-height:60px;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7A5A7A;color:#fff;padding:10px 20px;border-radius:18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:500;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.ring{display:inline-block;width:13px;height:13px;border:2px solid #FFB6C8;border-top-color:#7A5A7A;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:3px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid #FFB6C8;transition:background 0.2s;}
+.pin-dot.filled{background:#FFB6C8;}
+.pin-btn{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.5);font-family:'Nunito',sans-serif;font-size:24px;font-weight:800;color:#7A5A7A;cursor:pointer;transition:all 0.15s;}
+.pin-btn:hover{background:rgba(255,255,255,0.8);transform:scale(1.05);}
+.pin-btn:active{transform:scale(0.95);}
+.pin-del{font-size:20px;}
 .alerta-banner{background:linear-gradient(135deg,#FFE0E0,#FFD0D0);border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
 .alerta-banner .ab-icon{font-size:24px;}
 .alerta-banner .ab-text{font-size:12px;font-weight:700;color:#7A3A3A;}
@@ -139,6 +144,33 @@ textarea{resize:vertical;min-height:60px;}
 </head>
 <body>
 <div id="app-loader"><div class="logo">🍼</div><h2>Mundo Renato</h2><p>Conectando con la nube… ☁️</p></div>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#FFD6E0,#C8E6FF);z-index:998;flex-direction:column;align-items:center;justify-content:center;">
+  <div style="font-size:48px;margin-bottom:12px">🔐</div>
+  <h2 style="font-size:22px;font-weight:800;color:#7A5A7A;margin-bottom:6px">Mundo Renato</h2>
+  <p style="font-size:13px;color:#9A7A9A;margin-bottom:28px">Ingresa tu PIN para continuar</p>
+  <div style="display:flex;gap:10px;margin-bottom:20px" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div id="pin-error" style="color:#E05050;font-size:13px;font-weight:700;height:18px;margin-bottom:10px"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <div></div>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn pin-del" onclick="pinDel()">⌫</button>
+  </div>
+</div>
+
 <div id="app-main" style="display:none">
 
 <div class="header">
@@ -393,9 +425,54 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function ts(){return firebase.firestore.FieldValue.serverTimestamp();}
 
+// ── PIN ──
+var PIN_CORRECTO='290526';
+var pinActual='';
+var pinDesbloqueado=sessionStorage.getItem('mr_pin')==='ok';
+
+function mostrarPin(){
+  document.getElementById('app-loader').style.display='none';
+  var ps=document.getElementById('pin-screen');
+  ps.style.display='flex';
+}
+function pinPress(n){
+  if(pinActual.length>=6)return;
+  pinActual+=n;
+  actualizarDots();
+  if(pinActual.length===6){
+    if(pinActual===PIN_CORRECTO){
+      sessionStorage.setItem('mr_pin','ok');
+      document.getElementById('pin-screen').style.display='none';
+      document.getElementById('app-main').style.display='block';
+      pinDesbloqueado=true;
+    } else {
+      document.getElementById('pin-error').textContent='PIN incorrecto, intenta de nuevo';
+      setTimeout(function(){pinActual='';actualizarDots();document.getElementById('pin-error').textContent='';},800);
+    }
+  }
+}
+function pinDel(){
+  pinActual=pinActual.slice(0,-1);
+  actualizarDots();
+  document.getElementById('pin-error').textContent='';
+}
+function actualizarDots(){
+  var dots=document.querySelectorAll('.pin-dot');
+  dots.forEach(function(d,i){d.classList.toggle('filled',i<pinActual.length);});
+}
+
 // LOADER
 var loaderHidden=false;
-function hideLoader(){if(loaderHidden)return;loaderHidden=true;document.getElementById('app-loader').style.display='none';document.getElementById('app-main').style.display='block';}
+function hideLoader(){
+  if(loaderHidden)return;
+  loaderHidden=true;
+  if(pinDesbloqueado){
+    document.getElementById('app-loader').style.display='none';
+    document.getElementById('app-main').style.display='block';
+  } else {
+    mostrarPin();
+  }
+}
 setTimeout(function(){if(!loaderHidden){hideLoader();showToast('⚠️ Revisa conexión o reglas de Firestore');}},6000);
 
 // NAV
