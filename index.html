@@ -132,7 +132,7 @@
   <button class="nav-btn" onclick="showSection('gastos',this)">💰 Gastos</button>
   <button class="nav-btn" onclick="showSection('citas',this)">🏥 Citas</button>
   <button class="nav-btn" onclick="showSection('docs',this)">📄 Registros</button>
-  <button class="nav-btn" onclick="showSection('fotos',this)">📸 Fotos</button>
+
   <button class="nav-btn" onclick="showSection('hitos',this)">👣 Hitos</button>
   <button class="nav-btn" onclick="showSection('crecimiento',this)">📈 Crecimiento</button>
 </div>
@@ -143,7 +143,7 @@
     <div class="dash-tile t1"><div class="emoji">💸</div><div class="val" id="dash-total">—</div><div class="lbl">Gasto este mes</div></div>
     <div class="dash-tile t2"><div class="emoji">🏥</div><div class="val" id="dash-citas">—</div><div class="lbl">Citas</div></div>
     <div class="dash-tile t3"><div class="emoji">📄</div><div class="val" id="dash-docs">—</div><div class="lbl">Documentos</div></div>
-    <div class="dash-tile t4"><div class="emoji">📸</div><div class="val" id="dash-fotos">—</div><div class="lbl">Fotos</div></div>
+    <div class="dash-tile t4"><div class="emoji">📈</div><div class="val" id="dash-medidas">—</div><div class="lbl">Medidas</div></div>
     <div class="dash-tile t5"><div class="emoji">👣</div><div class="val" id="dash-hitos">—</div><div class="lbl">Hitos</div></div>
     <div class="dash-tile t6"><div class="emoji">📈</div><div class="val" id="dash-medidas">—</div><div class="lbl">Medidas</div></div>
   </div>
@@ -215,26 +215,7 @@
   <div class="card"><div class="card-title"><span>📂 Mis Registros</span></div><div id="docs-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
 </div>
 
-<!-- FOTOS -->
-<div id="fotos" class="section">
-  <div class="card">
-    <div class="card-title"><span>➕ Agregar Foto</span></div>
-    <div class="form-group"><label>Sección</label>
-      <select id="f-seccion"><option>🌱 Primeros días</option><option>🎂 Cumpleaños</option><option>🎉 Fiestas</option><option>👣 Hitos</option><option>🌟 Momentos especiales</option><option>🏖️ Paseos</option></select>
-    </div>
-    <div class="form-group"><label>Descripción</label><input type="text" id="f-desc" placeholder="Ej: Primera sonrisa"></div>
-    <div class="form-group"><label>Fecha</label><input type="date" id="f-fecha"></div>
-    <div class="form-group"><label>Foto</label>
-      <div class="upload-area" onclick="document.getElementById('f-file').click()">
-        <input type="file" id="f-file" accept="image/*" onchange="previewImg(this,'f-thumb',function(d){fotoData=d})">
-        <div class="up-icon">🖼️</div><p>Toca para subir foto</p>
-        <img id="f-thumb" class="thumb">
-      </div>
-    </div>
-    <button class="btn" onclick="agregarFoto()">💾 Guardar Foto</button>
-  </div>
-  <div id="fotos-sections"></div>
-</div>
+
 
 <!-- HITOS -->
 <div id="hitos" class="section">
@@ -398,7 +379,7 @@ function listen(col,cacheKey,sortFn,renderFns){
 listen('gastos','gastos',null,[renderGastos,renderDashboard]);
 listen('citas','citas',function(a,b){return a.fecha>b.fecha?1:-1;},[renderCitas,renderDashboard]);
 listen('docs','docs',null,[renderDocs]);
-listen('fotos','fotos',null,[renderFotos]);
+
 listen('hitos','hitos',null,[renderHitos,renderDashboard]);
 listen('medidas','medidas',function(a,b){return a.fecha>b.fecha?1:-1;},[renderCrecimiento]);
 
@@ -664,3 +645,7 @@ document.getElementById('c-fecha').value=new Date().toISOString().slice(0,16);
 </script>
 </body>
 </html>
+  
+   
+ 
+ 
