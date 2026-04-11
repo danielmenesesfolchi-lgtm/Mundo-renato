@@ -5,123 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mundo Renato</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- Firebase compat (NO module, funciona en sandbox) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;}
-  :root{
-    --cream:#FFF8F0;--pink:#FFD6E0;--blue:#C8E6FF;--mint:#C8F0E0;
-    --yellow:#FFF3C8;--purple:#E8D6FF;--peach:#FFE0C8;
-    --text:#5A4A5A;--soft:#9A8A9A;--white:#FFFFFF;--shadow:rgba(180,150,180,0.15);
-  }
-  body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
-  #app-loader{position:fixed;inset:0;background:linear-gradient(135deg,#FFD6E0,#C8E6FF);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;}
-  #app-loader .logo{font-size:48px;margin-bottom:12px;animation:pulse 1.2s infinite;}
-  #app-loader h2{font-size:22px;font-weight:800;color:#7A5A7A;}
-  #app-loader p{font-size:13px;color:#9A7A9A;margin-top:6px;}
-  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
-  .header{background:linear-gradient(135deg,#FFD6E0 0%,#C8E6FF 100%);padding:18px 20px 14px;text-align:center;box-shadow:0 4px 20px var(--shadow);}
-  .header h1{font-size:26px;font-weight:800;color:#7A5A7A;letter-spacing:1px;}
-  .header p{font-size:13px;color:#9A7A9A;margin-top:2px;}
-  .cloud-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.5);border-radius:20px;padding:3px 10px;font-size:11px;color:#7A5A7A;font-weight:700;margin-top:6px;}
-  .cloud-dot{width:7px;height:7px;border-radius:50%;background:#5ACA8A;animation:blink 2s infinite;}
-  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-  .nav{display:flex;overflow-x:auto;gap:8px;padding:14px 14px 10px;scrollbar-width:none;background:var(--white);box-shadow:0 2px 10px var(--shadow);position:sticky;top:0;z-index:100;}
-  .nav::-webkit-scrollbar{display:none;}
-  .nav-btn{flex-shrink:0;padding:8px 14px;border-radius:20px;border:2px solid transparent;background:var(--cream);color:var(--soft);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-  .nav-btn.active,.nav-btn:hover{background:linear-gradient(135deg,#FFD6E0,#C8E6FF);color:#7A5A7A;border-color:#FFB6C8;}
-  .section{display:none;padding:16px;max-width:700px;margin:0 auto;}
-  .section.active{display:block;}
-  .card{background:var(--white);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 16px var(--shadow);}
-  .card-title{font-size:16px;font-weight:800;color:#7A5A7A;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
-  .card-title span{display:flex;align-items:center;gap:8px;}
-  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
-  .dash-tile{border-radius:18px;padding:16px;text-align:center;}
-  .dash-tile .emoji{font-size:28px;}
-  .dash-tile .val{font-size:20px;font-weight:800;color:#7A5A7A;margin:4px 0;}
-  .dash-tile .lbl{font-size:11px;color:var(--soft);font-weight:600;}
-  .t1{background:var(--pink);}.t2{background:var(--blue);}.t3{background:var(--mint);}.t4{background:var(--purple);}.t5{background:var(--yellow);}.t6{background:var(--peach);}
-  .form-group{margin-bottom:12px;}
-  label{font-size:13px;font-weight:700;color:var(--soft);display:block;margin-bottom:5px;}
-  input,select,textarea{width:100%;padding:10px 14px;border-radius:12px;border:2px solid #F0E0F0;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;transition:border 0.2s;}
-  input:focus,select:focus,textarea:focus{border-color:#FFB6C8;}
-  textarea{resize:vertical;min-height:70px;}
-  .upload-area{border:2px dashed #FFB6C8;border-radius:14px;padding:16px;text-align:center;cursor:pointer;background:#FFF0F5;transition:all 0.2s;}
-  .upload-area:hover{background:var(--pink);}
-  .upload-area input[type=file]{display:none;}
-  .upload-area .up-icon{font-size:28px;}
-  .upload-area p{font-size:12px;color:var(--soft);margin-top:4px;font-weight:600;}
-  .thumb{width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-top:8px;display:none;}
-  .btn{width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#FFB6C8,#A8D8FF);color:#7A5A7A;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:opacity 0.2s,transform 0.1s;margin-top:4px;}
-  .btn:hover{opacity:0.9;transform:translateY(-1px);}
-  .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
-  .btn-sm{padding:9px 18px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-  .btn-pdf{background:linear-gradient(135deg,#C8F0E0,#A8D8FF);color:#4A7A6A;}
-  .list-item{background:var(--cream);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:background 0.2s;}
-  .list-item.clickable{cursor:pointer;}
-  .list-item.clickable:hover{background:var(--pink);}
-  .item-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-  .item-info{flex:1;min-width:0;}
-  .item-name{font-size:14px;font-weight:700;}
-  .item-sub{font-size:12px;color:var(--soft);margin-top:2px;}
-  .item-amount{font-size:15px;font-weight:800;color:#7A5A7A;white-space:nowrap;}
-  .item-receipt{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;border:2px solid #FFD6E0;}
-  .delete-btn{background:none;border:none;font-size:16px;cursor:pointer;color:#CCA0CC;padding:4px;flex-shrink:0;}
-  .section-label{font-size:15px;font-weight:800;color:#7A5A7A;margin:16px 0 8px;}
-  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
-  .photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:2px solid var(--pink);cursor:pointer;transition:transform 0.2s;}
-  .photo-thumb:hover{transform:scale(1.03);}
-  .doc-item{background:var(--cream);border-radius:14px;padding:13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
-  .doc-info{flex:1;}
-  .doc-name{font-size:14px;font-weight:700;}
-  .doc-sub{font-size:12px;color:var(--soft);}
-  .hito-item{background:var(--cream);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
-  .hito-badge{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-  .hito-info{flex:1;}
-  .hito-name{font-size:14px;font-weight:800;}
-  .hito-fecha{font-size:12px;color:var(--soft);margin-top:2px;}
-  .hito-nota{font-size:12px;color:#8A7A8A;margin-top:4px;font-style:italic;}
-  .filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-  .filter-btn{padding:6px 14px;border-radius:20px;border:2px solid #F0E0F0;background:var(--cream);color:var(--soft);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
-  .filter-btn.active{background:var(--pink);border-color:#FFB6C8;color:#7A5A7A;}
-  .resumen-bar{background:var(--cream);border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
-  .rb-cat{font-size:13px;font-weight:700;}
-  .rb-amt{font-size:14px;font-weight:800;color:#7A5A7A;}
-  .bar-fill-bg{height:6px;border-radius:3px;background:#F0E0F0;margin-top:5px;}
-  .bar-fill{height:6px;border-radius:3px;background:linear-gradient(90deg,#FFB6C8,#A8D8FF);}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(90,60,90,0.4);z-index:200;align-items:center;justify-content:center;padding:20px;}
-  .modal-overlay.open{display:flex;}
-  .modal{background:var(--white);border-radius:24px;padding:24px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(90,60,90,0.25);}
-  .modal-title{font-size:18px;font-weight:800;color:#7A5A7A;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
-  .close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--soft);}
-  .receipt-big{width:100%;border-radius:14px;margin-bottom:12px;border:2px solid var(--pink);}
-  .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;}
-  .lightbox.open{display:flex;}
-  .lightbox img{max-width:95vw;max-height:90vh;border-radius:16px;}
-  .lightbox-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;}
-  .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--pink);color:#7A5A7A;margin-right:4px;}
-  .empty{text-align:center;padding:30px 20px;color:var(--soft);}
-  .empty .e-icon{font-size:48px;margin-bottom:10px;}
-  .empty p{font-size:14px;font-weight:600;}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7A5A7A;color:#fff;padding:12px 24px;border-radius:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;z-index:500;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
-  .toast.show{opacity:1;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .ring{display:inline-block;width:14px;height:14px;border:2px solid #FFB6C8;border-top-color:#7A5A7A;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px;}
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#FFF8F0;--pink:#FFD6E0;--blue:#C8E6FF;--mint:#C8F0E0;
+  --yellow:#FFF3C8;--purple:#E8D6FF;--peach:#FFE0C8;--coral:#FFD0C0;
+  --text:#5A4A5A;--soft:#9A8A9A;--white:#fff;--shadow:rgba(180,150,180,0.15);
+  --red:#FF6B6B;--orange:#FFB347;--green:#5ACA8A;
+}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
+#app-loader{position:fixed;inset:0;background:linear-gradient(135deg,#FFD6E0,#C8E6FF);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;}
+#app-loader .logo{font-size:48px;margin-bottom:12px;animation:pulse 1.2s infinite;}
+#app-loader h2{font-size:22px;font-weight:800;color:#7A5A7A;}
+#app-loader p{font-size:13px;color:#9A7A9A;margin-top:6px;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+.header{background:linear-gradient(135deg,#FFD6E0,#C8E6FF);padding:16px 20px 12px;text-align:center;box-shadow:0 4px 20px var(--shadow);}
+.header h1{font-size:24px;font-weight:800;color:#7A5A7A;}
+.header p{font-size:12px;color:#9A7A9A;margin-top:2px;}
+.cloud-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.5);border-radius:20px;padding:3px 10px;font-size:11px;color:#7A5A7A;font-weight:700;margin-top:5px;}
+.cloud-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.nav{display:flex;overflow-x:auto;gap:8px;padding:12px 12px 8px;scrollbar-width:none;background:var(--white);box-shadow:0 2px 10px var(--shadow);position:sticky;top:0;z-index:100;}
+.nav::-webkit-scrollbar{display:none;}
+.nav-btn{flex-shrink:0;padding:7px 13px;border-radius:20px;border:2px solid transparent;background:var(--cream);color:var(--soft);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.nav-btn.active,.nav-btn:hover{background:linear-gradient(135deg,#FFD6E0,#C8E6FF);color:#7A5A7A;border-color:#FFB6C8;}
+.section{display:none;padding:14px;max-width:700px;margin:0 auto;}
+.section.active{display:block;}
+.card{background:var(--white);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px var(--shadow);}
+.card-title{font-size:15px;font-weight:800;color:#7A5A7A;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.card-title span{display:flex;align-items:center;gap:6px;}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.dash-tile{border-radius:16px;padding:14px;text-align:center;}
+.dash-tile .emoji{font-size:26px;}
+.dash-tile .val{font-size:18px;font-weight:800;color:#7A5A7A;margin:3px 0;}
+.dash-tile .lbl{font-size:10px;color:var(--soft);font-weight:600;}
+.t1{background:var(--pink);}.t2{background:var(--blue);}.t3{background:var(--mint);}
+.t4{background:var(--purple);}.t5{background:var(--yellow);}.t6{background:var(--peach);}
+.t7{background:var(--coral);}
+.form-group{margin-bottom:10px;}
+label{font-size:12px;font-weight:700;color:var(--soft);display:block;margin-bottom:4px;}
+input,select,textarea{width:100%;padding:9px 12px;border-radius:10px;border:2px solid #F0E0F0;font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);background:var(--cream);outline:none;transition:border 0.2s;}
+input:focus,select:focus,textarea:focus{border-color:#FFB6C8;}
+textarea{resize:vertical;min-height:60px;}
+.btn{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#FFB6C8,#A8D8FF);color:#7A5A7A;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:opacity 0.2s,transform 0.1s;margin-top:4px;}
+.btn:hover{opacity:0.9;transform:translateY(-1px);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-sm{padding:7px 14px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-pdf{background:linear-gradient(135deg,#C8F0E0,#A8D8FF);color:#4A7A6A;}
+.btn-danger{background:linear-gradient(135deg,#FFD6D6,#FFB6B6);color:#7A4A4A;}
+.list-item{background:var(--cream);border-radius:12px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:10px;transition:background 0.2s;}
+.list-item.clickable{cursor:pointer;}
+.list-item.clickable:hover{background:var(--pink);}
+.item-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.item-info{flex:1;min-width:0;}
+.item-name{font-size:13px;font-weight:700;}
+.item-sub{font-size:11px;color:var(--soft);margin-top:1px;}
+.item-amount{font-size:14px;font-weight:800;color:#7A5A7A;white-space:nowrap;}
+.delete-btn{background:none;border:none;font-size:15px;cursor:pointer;color:#CCA0CC;padding:3px;flex-shrink:0;}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.filter-btn{padding:5px 12px;border-radius:18px;border:2px solid #F0E0F0;background:var(--cream);color:var(--soft);font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;cursor:pointer;}
+.filter-btn.active{background:var(--pink);border-color:#FFB6C8;color:#7A5A7A;}
+.resumen-bar{background:var(--cream);border-radius:10px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.rb-cat{font-size:12px;font-weight:700;}
+.rb-amt{font-size:13px;font-weight:800;color:#7A5A7A;}
+.bar-fill-bg{height:5px;border-radius:3px;background:#F0E0F0;margin-top:4px;}
+.bar-fill{height:5px;border-radius:3px;background:linear-gradient(90deg,#FFB6C8,#A8D8FF);}
+.hito-item{background:var(--cream);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.hito-badge{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.hito-info{flex:1;}
+.hito-name{font-size:13px;font-weight:800;}
+.hito-fecha{font-size:11px;color:var(--soft);margin-top:1px;}
+.hito-nota{font-size:11px;color:#8A7A8A;margin-top:3px;font-style:italic;}
+/* FOTOS */
+.foto-item{background:var(--cream);border-radius:12px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.foto-emoji{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#FFD6E0,#C8E6FF);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.foto-info{flex:1;}
+.foto-name{font-size:13px;font-weight:700;}
+.foto-sub{font-size:11px;color:var(--soft);margin-top:1px;}
+.foto-link{font-size:11px;color:#7AB6FF;cursor:pointer;margin-top:2px;text-decoration:underline;}
+.section-label{font-size:14px;font-weight:800;color:#7A5A7A;margin:14px 0 6px;}
+/* INVENTARIO */
+.inv-item{background:var(--cream);border-radius:12px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.inv-info{flex:1;}
+.inv-name{font-size:13px;font-weight:700;}
+.inv-sub{font-size:11px;color:var(--soft);margin-top:1px;}
+.inv-stock{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.stock-num{font-size:16px;font-weight:800;color:#7A5A7A;min-width:28px;text-align:center;}
+.stock-btn{width:28px;height:28px;border-radius:8px;border:none;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s;}
+.stock-btn:hover{opacity:0.8;}
+.stock-plus{background:var(--mint);color:#3A7A5A;}
+.stock-minus{background:var(--pink);color:#7A3A5A;}
+.alerta-badge{display:inline-flex;align-items:center;gap:4px;background:#FFE0E0;color:var(--red);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;}
+.ok-badge{display:inline-flex;align-items:center;gap:4px;background:#E0FFE0;color:#3A8A5A;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;}
+/* AGENDA / CALENDARIO */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px;}
+.cal-header{text-align:center;font-size:11px;font-weight:800;color:var(--soft);padding:4px 0;}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;transition:background 0.2s;position:relative;}
+.cal-day:hover{background:var(--pink);}
+.cal-day.today{background:linear-gradient(135deg,#FFB6C8,#A8D8FF);color:#7A5A7A;}
+.cal-day.has-event::after{content:'';position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%;background:#FFB6C8;}
+.cal-day.other-month{color:#CCC;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav button{background:none;border:none;font-size:20px;cursor:pointer;color:var(--soft);padding:4px 8px;}
+.cal-nav h3{font-size:15px;font-weight:800;color:#7A5A7A;}
+.evento-item{background:var(--cream);border-radius:12px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.2s;}
+.evento-item:hover{background:var(--blue);}
+.evento-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.evento-info{flex:1;}
+.evento-name{font-size:13px;font-weight:700;}
+.evento-sub{font-size:11px;color:var(--soft);margin-top:1px;}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(90,60,90,0.4);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:20px;padding:20px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(90,60,90,0.25);}
+.modal-title{font-size:16px;font-weight:800;color:#7A5A7A;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--soft);}
+.receipt-big{width:100%;border-radius:12px;margin-bottom:10px;border:2px solid var(--pink);}
+.tag{display:inline-block;padding:2px 8px;border-radius:18px;font-size:10px;font-weight:700;background:var(--pink);color:#7A5A7A;margin-right:3px;}
+.empty{text-align:center;padding:24px 16px;color:var(--soft);}
+.empty .e-icon{font-size:42px;margin-bottom:8px;}
+.empty p{font-size:13px;font-weight:600;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7A5A7A;color:#fff;padding:10px 20px;border-radius:18px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:500;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ring{display:inline-block;width:13px;height:13px;border:2px solid #FFB6C8;border-top-color:#7A5A7A;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:3px;}
+.alerta-banner{background:linear-gradient(135deg,#FFE0E0,#FFD0D0);border-radius:14px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.alerta-banner .ab-icon{font-size:24px;}
+.alerta-banner .ab-text{font-size:12px;font-weight:700;color:#7A3A3A;}
 </style>
 </head>
 <body>
-
-<div id="app-loader">
-  <div class="logo">🍼</div>
-  <h2>Mundo Renato</h2>
-  <p>Conectando con la nube… ☁️</p>
-</div>
-
+<div id="app-loader"><div class="logo">🍼</div><h2>Mundo Renato</h2><p>Conectando con la nube… ☁️</p></div>
 <div id="app-main" style="display:none">
+
 <div class="header">
-  <div style="font-size:18px;letter-spacing:4px">🌟 🍼 🌟</div>
+  <div style="font-size:16px;letter-spacing:3px">🌟 🍼 🌟</div>
   <h1>Mundo Renato</h1>
   <p>Todo el amor en un lugar 💕</p>
   <div class="cloud-badge"><div class="cloud-dot"></div> Firebase · En tiempo real</div>
@@ -131,25 +152,28 @@
   <button class="nav-btn active" onclick="showSection('dashboard',this)">🏠 Inicio</button>
   <button class="nav-btn" onclick="showSection('gastos',this)">💰 Gastos</button>
   <button class="nav-btn" onclick="showSection('citas',this)">🏥 Citas</button>
-  <button class="nav-btn" onclick="showSection('docs',this)">📄 Registros</button>
-
+  <button class="nav-btn" onclick="showSection('docs',this)">📄 Docs</button>
+  <button class="nav-btn" onclick="showSection('fotos',this)">📸 Fotos</button>
+  <button class="nav-btn" onclick="showSection('inventario',this)">📦 Inventario</button>
+  <button class="nav-btn" onclick="showSection('agenda',this)">📅 Agenda</button>
   <button class="nav-btn" onclick="showSection('hitos',this)">👣 Hitos</button>
   <button class="nav-btn" onclick="showSection('crecimiento',this)">📈 Crecimiento</button>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="section active">
+  <div id="dash-alertas"></div>
   <div class="dash-grid">
     <div class="dash-tile t1"><div class="emoji">💸</div><div class="val" id="dash-total">—</div><div class="lbl">Gasto este mes</div></div>
     <div class="dash-tile t2"><div class="emoji">🏥</div><div class="val" id="dash-citas">—</div><div class="lbl">Citas</div></div>
-    <div class="dash-tile t3"><div class="emoji">📄</div><div class="val" id="dash-docs">—</div><div class="lbl">Documentos</div></div>
-    <div class="dash-tile t4"><div class="emoji">📈</div><div class="val" id="dash-medidas">—</div><div class="lbl">Medidas</div></div>
+    <div class="dash-tile t3"><div class="emoji">📦</div><div class="val" id="dash-inv-ok">—</div><div class="lbl">Insumos OK</div></div>
+    <div class="dash-tile t4"><div class="emoji">⚠️</div><div class="val" id="dash-inv-alerta">—</div><div class="lbl">Insumos bajos</div></div>
     <div class="dash-tile t5"><div class="emoji">👣</div><div class="val" id="dash-hitos">—</div><div class="lbl">Hitos</div></div>
-    <div class="dash-tile t6"><div class="emoji">📈</div><div class="val" id="dash-medidas">—</div><div class="lbl">Medidas</div></div>
+    <div class="dash-tile t6"><div class="emoji">📅</div><div class="val" id="dash-eventos">—</div><div class="lbl">Eventos próximos</div></div>
   </div>
-  <div class="card"><div class="card-title"><span>💰 Últimos gastos</span></div><div id="dash-gastos-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
-  <div class="card"><div class="card-title"><span>🏥 Próxima cita</span></div><div id="dash-proxima"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
-  <div class="card"><div class="card-title"><span>👣 Último hito</span></div><div id="dash-hito-last"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+  <div class="card"><div class="card-title"><span>💰 Últimos gastos</span></div><div id="dash-gastos-list"></div></div>
+  <div class="card"><div class="card-title"><span>📅 Próximos eventos</span></div><div id="dash-eventos-list"></div></div>
+  <div class="card"><div class="card-title"><span>📦 Insumos con alerta</span></div><div id="dash-inv-list"></div></div>
 </div>
 
 <!-- GASTOS -->
@@ -162,20 +186,13 @@
     <div class="form-group"><label>Descripción</label><input type="text" id="g-desc" placeholder="Ej: Pañales talla M"></div>
     <div class="form-group"><label>Monto ($)</label><input type="number" id="g-monto" placeholder="0"></div>
     <div class="form-group"><label>Fecha</label><input type="date" id="g-fecha"></div>
-    <div class="form-group"><label>Foto de la boleta</label>
-      <div class="upload-area" onclick="document.getElementById('g-boleta').click()">
-        <input type="file" id="g-boleta" accept="image/*" onchange="previewImg(this,'g-thumb',function(d){boletaData=d})">
-        <div class="up-icon">📷</div><p>Toca para subir foto de la boleta</p>
-        <img id="g-thumb" class="thumb">
-      </div>
-    </div>
     <button class="btn" id="g-save-btn" onclick="agregarGasto()">💾 Guardar Gasto</button>
   </div>
   <div class="card">
     <div class="card-title"><span>📋 Historial</span><button class="btn-sm btn-pdf" onclick="exportarPDF()">📥 PDF</button></div>
     <div class="filter-row" id="g-filters"></div>
     <div id="gastos-resumen"></div>
-    <div id="gastos-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div>
+    <div id="gastos-list"></div>
   </div>
 </div>
 
@@ -191,7 +208,7 @@
     <div class="form-group"><label>Notas</label><textarea id="c-notas" placeholder="Observaciones..."></textarea></div>
     <button class="btn" onclick="agregarCita()">💾 Guardar Cita</button>
   </div>
-  <div class="card"><div class="card-title"><span>📅 Historial</span></div><div id="citas-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+  <div class="card"><div class="card-title"><span>📅 Historial</span></div><div id="citas-list"></div></div>
 </div>
 
 <!-- DOCS -->
@@ -203,19 +220,87 @@
     </div>
     <div class="form-group"><label>Nombre</label><input type="text" id="d-nombre" placeholder="Ej: Vacuna triple viral"></div>
     <div class="form-group"><label>Fecha</label><input type="date" id="d-fecha"></div>
-    <div class="form-group"><label>Archivo</label>
-      <div class="upload-area" onclick="document.getElementById('d-file').click()">
-        <input type="file" id="d-file" accept="image/*" onchange="previewDoc(this)">
-        <div class="up-icon">📎</div><p>Imagen</p>
-        <img id="d-thumb" class="thumb">
-      </div>
-    </div>
+    <div class="form-group"><label>Enlace (Google Drive / PDF online)</label><input type="url" id="d-link" placeholder="https://drive.google.com/..."></div>
+    <div class="form-group"><label>Notas</label><input type="text" id="d-notas" placeholder="Observaciones"></div>
     <button class="btn" onclick="agregarDoc()">💾 Guardar</button>
   </div>
-  <div class="card"><div class="card-title"><span>📂 Mis Registros</span></div><div id="docs-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div></div>
+  <div class="card"><div class="card-title"><span>📂 Mis Registros</span></div><div id="docs-list"></div></div>
 </div>
 
+<!-- FOTOS -->
+<div id="fotos" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Agregar Momento</span></div>
+    <div class="form-group"><label>Sección</label>
+      <select id="f-seccion"><option>🌱 Primeros días</option><option>🎂 Cumpleaños</option><option>🎉 Fiestas</option><option>👣 Hitos</option><option>🌟 Momentos especiales</option><option>🏖️ Paseos</option></select>
+    </div>
+    <div class="form-group"><label>Descripción</label><input type="text" id="f-desc" placeholder="Ej: Primera sonrisa de Renato"></div>
+    <div class="form-group"><label>Fecha</label><input type="date" id="f-fecha"></div>
+    <div class="form-group"><label>Enlace de Google Photos o Drive 📎</label><input type="url" id="f-link" placeholder="https://photos.google.com/..."></div>
+    <div style="background:var(--blue);border-radius:10px;padding:10px;font-size:12px;color:#4A6A8A;margin-bottom:10px">
+      💡 Sube la foto a <strong>Google Photos</strong> o <strong>Google Drive</strong>, copia el enlace y pégalo aquí. Así no hay límite de tamaño.
+    </div>
+    <button class="btn" onclick="agregarFoto()">💾 Guardar Momento</button>
+  </div>
+  <div id="fotos-sections"></div>
+</div>
 
+<!-- INVENTARIO -->
+<div id="inventario" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Agregar Insumo</span></div>
+    <div class="form-group"><label>Nombre del insumo</label><input type="text" id="inv-nombre" placeholder="Ej: Pañales talla M"></div>
+    <div class="form-group"><label>Categoría</label>
+      <select id="inv-cat"><option>🍼 Alimentación</option><option>🧴 Higiene</option><option>👗 Ropa</option><option>💊 Medicamentos</option><option>🧸 Juguetes</option><option>📦 Otros</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>Stock actual</label><input type="number" id="inv-stock" placeholder="10" min="0"></div>
+      <div class="form-group"><label>Alerta cuando quede</label><input type="number" id="inv-minimo" placeholder="3" min="0"></div>
+    </div>
+    <div class="form-group"><label>Unidad</label><input type="text" id="inv-unidad" placeholder="Ej: paquetes, unidades, ml"></div>
+    <button class="btn" onclick="agregarInsumo()">💾 Guardar Insumo</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>📦 Mis Insumos</span></div>
+    <div class="filter-row">
+      <button class="filter-btn active" id="inv-f-todos" onclick="setInvFilter('Todos')">Todos</button>
+      <button class="filter-btn" id="inv-f-alerta" onclick="setInvFilter('Alerta')">⚠️ Con alerta</button>
+    </div>
+    <div id="inv-list"></div>
+  </div>
+</div>
+
+<!-- AGENDA -->
+<div id="agenda" class="section">
+  <div class="card">
+    <div class="card-title"><span>➕ Nuevo Evento</span></div>
+    <div class="form-group"><label>Título</label><input type="text" id="ev-titulo" placeholder="Ej: Vacuna de los 2 meses"></div>
+    <div class="form-group"><label>Tipo</label>
+      <select id="ev-tipo"><option>🏥 Médico</option><option>🎉 Celebración</option><option>🛒 Compras</option><option>👨‍👩‍👦 Familiar</option><option>📋 Trámite</option><option>🌟 Otro</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>Fecha</label><input type="date" id="ev-fecha"></div>
+      <div class="form-group"><label>Hora (opcional)</label><input type="time" id="ev-hora"></div>
+    </div>
+    <div class="form-group"><label>Notas</label><textarea id="ev-notas" placeholder="Detalles del evento..."></textarea></div>
+    <button class="btn" onclick="agregarEvento()">💾 Guardar Evento</button>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div class="card">
+    <div class="cal-nav">
+      <button onclick="cambiarMes(-1)">‹</button>
+      <h3 id="cal-titulo"></h3>
+      <button onclick="cambiarMes(1)">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span id="agenda-list-title">📋 Próximos eventos</span></div>
+    <div id="eventos-list"></div>
+  </div>
+</div>
 
 <!-- HITOS -->
 <div id="hitos" class="section">
@@ -233,15 +318,15 @@
         <option>🌟 Otro hito especial</option>
       </select>
     </div>
-    <div class="form-group"><label>Descripción personalizada</label><input type="text" id="h-desc" placeholder="Opcional"></div>
+    <div class="form-group"><label>Descripción</label><input type="text" id="h-desc" placeholder="Opcional"></div>
     <div class="form-group"><label>Fecha</label><input type="date" id="h-fecha"></div>
     <div class="form-group"><label>Edad de Renato</label><input type="text" id="h-edad" placeholder="Ej: 3 meses y 2 días"></div>
-    <div class="form-group"><label>Nota especial 💕</label><textarea id="h-nota" placeholder="Cuéntanos cómo fue ese momento..."></textarea></div>
+    <div class="form-group"><label>Nota especial 💕</label><textarea id="h-nota" placeholder="Cuéntanos cómo fue..."></textarea></div>
     <button class="btn" onclick="agregarHito()">💾 Guardar Hito</button>
   </div>
   <div class="card">
     <div class="card-title"><span>👣 Hitos de Renato</span><button class="btn-sm btn-pdf" onclick="exportarHitosPDF()">📥 PDF</button></div>
-    <div id="hitos-list"><div class="empty"><div class="e-icon">⏳</div><p>Cargando…</p></div></div>
+    <div id="hitos-list"></div>
   </div>
 </div>
 
@@ -251,13 +336,13 @@
     <div class="card-title"><span>➕ Registrar Medidas</span></div>
     <div class="form-group"><label>Fecha</label><input type="date" id="cr-fecha"></div>
     <div class="form-group"><label>Edad de Renato</label><input type="text" id="cr-edad" placeholder="Ej: 2 meses"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       <div class="form-group"><label>Peso (kg)</label><input type="number" id="cr-peso" step="0.01" placeholder="3.5"></div>
       <div class="form-group"><label>Talla (cm)</label><input type="number" id="cr-talla" step="0.1" placeholder="50"></div>
       <div class="form-group"><label>Cráneo (cm)</label><input type="number" id="cr-craneo" step="0.1" placeholder="34"></div>
     </div>
     <div class="form-group"><label>Notas</label><input type="text" id="cr-nota" placeholder="Ej: Control 2 meses"></div>
-    <button class="btn" onclick="agregarMedida()">💾 Guardar Medidas</button>
+    <button class="btn" onclick="agregarMedida()">💾 Guardar</button>
   </div>
   <div id="cr-resumen"></div>
   <div class="card">
@@ -267,7 +352,7 @@
       <button class="filter-btn" id="cr-btn-talla" onclick="setCrFilter('talla')">📏 Talla</button>
       <button class="filter-btn" id="cr-btn-craneo" onclick="setCrFilter('craneo')">🧠 Cráneo</button>
     </div>
-    <canvas id="cr-chart" style="width:100%;max-height:260px"></canvas>
+    <canvas id="cr-chart" style="width:100%;max-height:240px"></canvas>
     <div id="cr-empty" class="empty" style="display:none"><div class="e-icon">📈</div><p>Agrega al menos 2 registros</p></div>
   </div>
   <div class="card"><div class="card-title"><span>📋 Historial</span></div><div id="cr-list"></div></div>
@@ -277,86 +362,43 @@
 <div class="modal-overlay" id="modal-gasto">
   <div class="modal">
     <div class="modal-title"><span id="modal-g-titulo"></span><button class="close-btn" onclick="closeModal('modal-gasto')">✕</button></div>
-    <img id="modal-g-img" class="receipt-big" style="display:none">
     <div id="modal-g-body"></div>
   </div>
-</div>
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lightbox-close">✕</button>
-  <img id="lb-img" src="">
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Firebase compat init ──
-const firebaseConfig = {
-  apiKey: "AIzaSyCy0DxJrE4pNTG4RIZuclVJkkmg1fgSk5g",
-  authDomain: "mundo-renato.firebaseapp.com",
-  projectId: "mundo-renato",
-  storageBucket: "mundo-renato.firebasestorage.app",
-  messagingSenderId: "1087073503065",
-  appId: "1:1087073503065:web:864e1a928bdd9514acee48"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+firebase.initializeApp({
+  apiKey:"AIzaSyCy0DxJrE4pNTG4RIZuclVJkkmg1fgSk5g",
+  authDomain:"mundo-renato.firebaseapp.com",
+  projectId:"mundo-renato",
+  storageBucket:"mundo-renato.firebasestorage.app",
+  messagingSenderId:"1087073503065",
+  appId:"1:1087073503065:web:864e1a928bdd9514acee48"
+});
+var db=firebase.firestore();
+var cache={gastos:[],citas:[],docs:[],fotos:[],hitos:[],medidas:[],insumos:[],eventos:[]};
+var activeFilter='Todos', crFilter='peso', invFilter='Todos';
+var calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+var calDiaSeleccionado=null;
+var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+var DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+var HCOLS=['#FFD6E0','#C8E6FF','#C8F0E0','#FFF3C8','#E8D6FF','#FFE0C8'];
+var EV_COLS={' 🏥 Médico':'#FFB6C8','🎉 Celebración':'#A8D8FF','🛒 Compras':'#A8F0C8','👨‍👩‍👦 Familiar':'#D8A8FF','📋 Trámite':'#FFD8A8','🌟 Otro':'#FFB6C8'};
 
-// ── Cache & state ──
-const cache = {gastos:[],citas:[],docs:[],fotos:[],hitos:[],medidas:[]};
-var boletaData=null, docData=null, fotoData=null;
-var activeFilter='Todos', crFilter='peso';
-
-// ── Helpers ──
 function fmtMoney(n){return '$'+Number(n).toLocaleString('es-CL');}
 function fmtDate(d){if(!d)return '';var p=d.split('T')[0].split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function setToday(id){var e=document.getElementById(id);if(e)e.value=new Date().toISOString().split('T')[0];}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');}
-function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+function ts(){return firebase.firestore.FieldValue.serverTimestamp();}
 
-function comprimirImagen(file, maxW, calidad, cb){
-  var r=new FileReader();
-  r.onload=function(e){
-    var img=new Image();
-    img.onload=function(){
-      var canvas=document.createElement('canvas');
-      var w=img.width, h=img.height;
-      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
-      canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      cb(canvas.toDataURL('image/jpeg', calidad));
-    };
-    img.src=e.target.result;
-  };
-  r.readAsDataURL(file);
-}
-
-function previewImg(input,thumbId,cb){
-  if(!input.files[0])return;
-  comprimirImagen(input.files[0], 800, 0.6, function(data){
-    cb(data);
-    var t=document.getElementById(thumbId);t.src=data;t.style.display='block';
-  });
-}
-function previewDoc(input){
-  if(!input.files[0])return;
-  comprimirImagen(input.files[0], 800, 0.6, function(data){
-    docData=data;
-    var t=document.getElementById('d-thumb');t.src=data;t.style.display='block';
-  });
-}
-
-// ── Loader ──
+// LOADER
 var loaderHidden=false;
-function hideLoader(){
-  if(loaderHidden)return;
-  loaderHidden=true;
-  document.getElementById('app-loader').style.display='none';
-  document.getElementById('app-main').style.display='block';
-}
+function hideLoader(){if(loaderHidden)return;loaderHidden=true;document.getElementById('app-loader').style.display='none';document.getElementById('app-main').style.display='block';}
 setTimeout(function(){if(!loaderHidden){hideLoader();showToast('⚠️ Revisa conexión o reglas de Firestore');}},6000);
 
-// ── Nav ──
+// NAV
 function showSection(id,btn){
   document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
@@ -364,24 +406,26 @@ function showSection(id,btn){
   if(btn)btn.classList.add('active');
   if(id==='dashboard')renderDashboard();
   if(id==='crecimiento')renderCrecimiento();
+  if(id==='agenda'){renderCalendario();renderEventos();}
 }
 
-// ── Real-time listeners ──
-function listen(col,cacheKey,sortFn,renderFns){
+// LISTENERS
+function listen(col,key,sortFn,fns){
   db.collection(col).orderBy('ts','desc').onSnapshot(function(snap){
     hideLoader();
-    cache[cacheKey]=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    if(sortFn)cache[cacheKey].sort(sortFn);
-    renderFns.forEach(function(fn){fn();});
+    cache[key]=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(sortFn)cache[key].sort(sortFn);
+    fns.forEach(function(f){f();});
   },function(){hideLoader();});
 }
-
 listen('gastos','gastos',null,[renderGastos,renderDashboard]);
 listen('citas','citas',function(a,b){return a.fecha>b.fecha?1:-1;},[renderCitas,renderDashboard]);
 listen('docs','docs',null,[renderDocs]);
-
+listen('fotos','fotos',null,[renderFotos]);
 listen('hitos','hitos',null,[renderHitos,renderDashboard]);
 listen('medidas','medidas',function(a,b){return a.fecha>b.fecha?1:-1;},[renderCrecimiento]);
+listen('insumos','insumos',null,[renderInventario,renderDashboard]);
+listen('eventos','eventos',function(a,b){return a.fecha>b.fecha?1:-1;},[renderEventos,renderCalendario,renderDashboard]);
 
 // ── GASTOS ──
 function agregarGasto(){
@@ -392,38 +436,27 @@ function agregarGasto(){
   if(!desc||!monto)return alert('Completa descripción y monto 💕');
   var btn=document.getElementById('g-save-btn');
   btn.disabled=true;btn.innerHTML='<span class="ring"></span> Guardando…';
-  db.collection('gastos').add({cat:cat,desc:desc,monto:Number(monto),fecha:fecha,boleta:boletaData||null,ts:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){
-    boletaData=null;
-    ['g-desc','g-monto','g-fecha'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('g-thumb').style.display='none';
-    document.getElementById('g-boleta').value='';
-    showToast('💰 Gasto guardado ☁️');
-  }).catch(function(e){alert('Error: '+e.message);})
+  db.collection('gastos').add({cat:cat,desc:desc,monto:Number(monto),fecha:fecha,ts:ts()})
+  .then(function(){['g-desc','g-monto','g-fecha'].forEach(function(id){document.getElementById(id).value='';});showToast('💰 Gasto guardado ☁️');})
+  .catch(function(e){alert('Error: '+e.message);})
   .finally(function(){btn.disabled=false;btn.innerHTML='💾 Guardar Gasto';});
 }
-
 function setFilter(cat){activeFilter=cat;renderGastos();}
-
 function renderGastos(){
   var cats=['Todos','🍼 Insumos','🏥 Médico','🎉 Fiesta','👗 Ropa','🧸 Juguetes','🍼 Alimentación','📦 Otros'];
   document.getElementById('g-filters').innerHTML=cats.map(function(c){return '<button class="filter-btn'+(c===activeFilter?' active':'')+'" onclick="setFilter(\''+c+'\')">'+c+'</button>';}).join('');
   var filtered=activeFilter==='Todos'?cache.gastos:cache.gastos.filter(function(g){return g.cat===activeFilter;});
-  var totPorCat={};
-  cache.gastos.forEach(function(g){totPorCat[g.cat]=(totPorCat[g.cat]||0)+g.monto;});
+  var totPorCat={};cache.gastos.forEach(function(g){totPorCat[g.cat]=(totPorCat[g.cat]||0)+g.monto;});
   var grand=Object.values(totPorCat).reduce(function(a,b){return a+b;},0)||1;
-  document.getElementById('gastos-resumen').innerHTML=Object.entries(totPorCat).sort(function(a,b){return b[1]-a[1];}).map(function(e){var c=e[0],t=e[1];return '<div class="resumen-bar"><div style="flex:1"><div class="rb-cat">'+c+'</div><div class="bar-fill-bg"><div class="bar-fill" style="width:'+Math.round(t/grand*100)+'%"></div></div></div><div class="rb-amt">'+fmtMoney(t)+'</div></div>';}).join('');
+  document.getElementById('gastos-resumen').innerHTML=Object.entries(totPorCat).sort(function(a,b){return b[1]-a[1];}).map(function(e){return '<div class="resumen-bar"><div style="flex:1"><div class="rb-cat">'+e[0]+'</div><div class="bar-fill-bg"><div class="bar-fill" style="width:'+Math.round(e[1]/grand*100)+'%"></div></div></div><div class="rb-amt">'+fmtMoney(e[1])+'</div></div>';}).join('');
   var el=document.getElementById('gastos-list');
   if(!filtered.length){el.innerHTML='<div class="empty"><div class="e-icon">💸</div><p>Sin gastos aún</p></div>';return;}
-  el.innerHTML=filtered.map(function(g){return '<div class="list-item clickable" onclick="verGasto(\''+g.id+'\')"><div class="item-icon" style="background:var(--yellow)">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+g.desc+'</div><div class="item-sub">'+g.cat.split(' ').slice(1).join(' ')+' · '+fmtDate(g.fecha)+'</div></div><div class="item-amount">'+fmtMoney(g.monto)+'</div>'+(g.boleta?'<img class="item-receipt" src="'+g.boleta+'">':'')+'<button class="delete-btn" onclick="event.stopPropagation();eliminar(\'gastos\',\''+g.id+'\')">🗑️</button></div>';}).join('');
+  el.innerHTML=filtered.map(function(g){return '<div class="list-item clickable" onclick="verGasto(\''+g.id+'\')"><div class="item-icon" style="background:var(--yellow)">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+g.desc+'</div><div class="item-sub">'+g.cat.split(' ').slice(1).join(' ')+' · '+fmtDate(g.fecha)+'</div></div><div class="item-amount">'+fmtMoney(g.monto)+'</div><button class="delete-btn" onclick="event.stopPropagation();eliminar(\'gastos\',\''+g.id+'\')">🗑️</button></div>';}).join('');
 }
-
 function verGasto(id){
   var g=cache.gastos.find(function(x){return x.id===id;});if(!g)return;
   document.getElementById('modal-g-titulo').textContent=g.desc;
-  var img=document.getElementById('modal-g-img');
-  if(g.boleta){img.src=g.boleta;img.style.display='block';}else{img.style.display='none';}
-  document.getElementById('modal-g-body').innerHTML='<div style="margin-bottom:8px"><span class="tag">'+g.cat+'</span></div><p><strong>Monto:</strong> '+fmtMoney(g.monto)+'</p><p><strong>Fecha:</strong> '+fmtDate(g.fecha)+'</p>'+(g.boleta?'':'<p style="color:var(--soft);font-size:13px;margin-top:8px">Sin boleta adjunta</p>');
+  document.getElementById('modal-g-body').innerHTML='<div style="margin-bottom:8px"><span class="tag">'+g.cat+'</span></div><p><strong>Monto:</strong> '+fmtMoney(g.monto)+'</p><p><strong>Fecha:</strong> '+fmtDate(g.fecha)+'</p>';
   document.getElementById('modal-gasto').classList.add('open');
 }
 
@@ -434,14 +467,13 @@ function agregarCita(){
   var tipo=document.getElementById('c-tipo').value;
   var notas=document.getElementById('c-notas').value;
   if(!doctor||!fecha)return alert('Completa doctor y fecha 💕');
-  db.collection('citas').add({tipo:tipo,doctor:doctor,fecha:fecha,notas:notas,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  db.collection('citas').add({tipo:tipo,doctor:doctor,fecha:fecha,notas:notas,ts:ts()})
   .then(function(){['c-doctor','c-notas'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('c-fecha').value='';showToast('🏥 Cita guardada ☁️');});
 }
-
 function renderCitas(){
   var el=document.getElementById('citas-list');
   if(!cache.citas.length){el.innerHTML='<div class="empty"><div class="e-icon">🏥</div><p>Sin citas registradas</p></div>';return;}
-  el.innerHTML=cache.citas.map(function(c){return '<div class="list-item"><div class="item-icon" style="background:var(--blue)">'+c.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+c.doctor+'</div><div class="item-sub">'+c.tipo+' · '+fmtDate(c.fecha)+'</div>'+(c.notas?'<div class="item-sub" style="margin-top:4px">'+c.notas.substring(0,60)+(c.notas.length>60?'...':'')+'</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'citas\',\''+c.id+'\')">🗑️</button></div>';}).join('');
+  el.innerHTML=cache.citas.map(function(c){return '<div class="list-item"><div class="item-icon" style="background:var(--blue)">'+c.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+c.doctor+'</div><div class="item-sub">'+c.tipo+' · '+fmtDate(c.fecha)+'</div>'+(c.notas?'<div class="item-sub">'+c.notas.substring(0,50)+'</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'citas\',\''+c.id+'\')">🗑️</button></div>';}).join('');
 }
 
 // ── DOCS ──
@@ -449,15 +481,16 @@ function agregarDoc(){
   var nombre=document.getElementById('d-nombre').value.trim();
   var fecha=document.getElementById('d-fecha').value;
   var tipo=document.getElementById('d-tipo').value;
+  var link=document.getElementById('d-link').value.trim();
+  var notas=document.getElementById('d-notas').value.trim();
   if(!nombre)return alert('Agrega un nombre 💕');
-  db.collection('docs').add({tipo:tipo,nombre:nombre,fecha:fecha,data:docData||null,ts:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){docData=null;document.getElementById('d-nombre').value='';document.getElementById('d-fecha').value='';document.getElementById('d-thumb').style.display='none';document.getElementById('d-file').value='';showToast('📄 Documento guardado ☁️');});
+  db.collection('docs').add({tipo:tipo,nombre:nombre,fecha:fecha,link:link,notas:notas,ts:ts()})
+  .then(function(){['d-nombre','d-fecha','d-link','d-notas'].forEach(function(id){document.getElementById(id).value='';});showToast('📄 Documento guardado ☁️');});
 }
-
 function renderDocs(){
   var el=document.getElementById('docs-list');
   if(!cache.docs.length){el.innerHTML='<div class="empty"><div class="e-icon">📄</div><p>Sin documentos aún</p></div>';return;}
-  el.innerHTML=cache.docs.map(function(d){return '<div class="doc-item">'+(d.data?'<img src="'+d.data+'" style="width:44px;height:44px;border-radius:10px;object-fit:cover;border:2px solid var(--pink)">':'<div style="font-size:30px">'+d.tipo.split(' ')[0]+'</div>')+'<div class="doc-info"><div class="doc-name">'+d.nombre+'</div><div class="doc-sub">'+d.tipo+' · '+fmtDate(d.fecha)+'</div>'+(d.data?'<div style="font-size:11px;color:#AAA;cursor:pointer" onclick="openLightbox(\''+d.data.replace(/'/g,"\\'")+'\')" >👁️ Ver</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'docs\',\''+d.id+'\')">🗑️</button></div>';}).join('');
+  el.innerHTML=cache.docs.map(function(d){return '<div class="list-item"><div class="item-icon" style="background:var(--purple)">'+d.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+d.nombre+'</div><div class="item-sub">'+d.tipo+' · '+fmtDate(d.fecha)+'</div>'+(d.link?'<div style="font-size:11px;color:#7AB6FF;cursor:pointer" onclick="window.open(\''+d.link+'\',\'_blank\')">🔗 Ver documento</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'docs\',\''+d.id+'\')">🗑️</button></div>';}).join('');
 }
 
 // ── FOTOS ──
@@ -465,24 +498,108 @@ function agregarFoto(){
   var desc=document.getElementById('f-desc').value.trim();
   var fecha=document.getElementById('f-fecha').value;
   var seccion=document.getElementById('f-seccion').value;
-  if(!fotoData)return alert('Selecciona una foto 📸');
-  db.collection('fotos').add({seccion:seccion,desc:desc,fecha:fecha,data:fotoData,ts:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){fotoData=null;['f-desc','f-fecha'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('f-thumb').style.display='none';document.getElementById('f-file').value='';showToast('📸 Foto guardada ☁️');});
+  var link=document.getElementById('f-link').value.trim();
+  if(!desc)return alert('Agrega una descripción 💕');
+  db.collection('fotos').add({seccion:seccion,desc:desc,fecha:fecha,link:link,ts:ts()})
+  .then(function(){['f-desc','f-fecha','f-link'].forEach(function(id){document.getElementById(id).value='';});showToast('📸 Momento guardado ☁️');});
 }
-
 function renderFotos(){
   var el=document.getElementById('fotos-sections');
   var secs=['🌱 Primeros días','🎂 Cumpleaños','🎉 Fiestas','👣 Hitos','🌟 Momentos especiales','🏖️ Paseos'];
   var html=secs.map(function(s){
     var fs=cache.fotos.filter(function(f){return f.seccion===s;});
     if(!fs.length)return '';
-    return '<div class="section-label">'+s+'</div><div class="photo-grid">'+fs.map(function(f){return '<img class="photo-thumb" src="'+f.data+'" title="'+(f.desc||'')+'" onclick="openLightbox(\''+f.data.replace(/'/g,"\\'")+'\')">'; }).join('')+'</div>';
+    return '<div class="section-label">'+s+'</div>'+fs.map(function(f){return '<div class="foto-item"><div class="foto-emoji">'+s.split(' ')[0]+'</div><div class="foto-info"><div class="foto-name">'+f.desc+'</div><div class="foto-sub">'+fmtDate(f.fecha)+'</div>'+(f.link?'<div class="foto-link" onclick="window.open(\''+f.link+'\',\'_blank\')">🔗 Ver foto</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'fotos\',\''+f.id+'\')">🗑️</button></div>';}).join('');
   }).join('');
   el.innerHTML=html||'<div class="card"><div class="empty"><div class="e-icon">📸</div><p>¡Agrega el primer recuerdo de Renato!</p></div></div>';
 }
 
+// ── INVENTARIO ──
+function agregarInsumo(){
+  var nombre=document.getElementById('inv-nombre').value.trim();
+  var cat=document.getElementById('inv-cat').value;
+  var stock=parseInt(document.getElementById('inv-stock').value)||0;
+  var minimo=parseInt(document.getElementById('inv-minimo').value)||1;
+  var unidad=document.getElementById('inv-unidad').value.trim()||'unidades';
+  if(!nombre)return alert('Agrega el nombre del insumo 💕');
+  db.collection('insumos').add({nombre:nombre,cat:cat,stock:stock,minimo:minimo,unidad:unidad,ts:ts()})
+  .then(function(){['inv-nombre','inv-stock','inv-minimo','inv-unidad'].forEach(function(id){document.getElementById(id).value='';});showToast('📦 Insumo guardado ☁️');});
+}
+function setInvFilter(f){
+  invFilter=f;
+  document.getElementById('inv-f-todos').classList.toggle('active',f==='Todos');
+  document.getElementById('inv-f-alerta').classList.toggle('active',f==='Alerta');
+  renderInventario();
+}
+function actualizarStock(id,delta){
+  var ins=cache.insumos.find(function(x){return x.id===id;});
+  if(!ins)return;
+  var nuevo=Math.max(0,(ins.stock||0)+delta);
+  db.collection('insumos').doc(id).update({stock:nuevo});
+}
+function renderInventario(){
+  var el=document.getElementById('inv-list');
+  var filtered=invFilter==='Alerta'?cache.insumos.filter(function(i){return i.stock<=i.minimo;}):cache.insumos;
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="e-icon">📦</div><p>'+(invFilter==='Alerta'?'Sin alertas activas 🎉':'Sin insumos registrados')+'</p></div>';return;}
+  el.innerHTML=filtered.map(function(i){
+    var alerta=i.stock<=i.minimo;
+    return '<div class="inv-item"><div class="item-icon" style="background:'+(alerta?'#FFE0E0':'var(--mint)')+'">'+i.cat.split(' ')[0]+'</div><div class="inv-info"><div class="inv-name">'+i.nombre+'</div><div class="inv-sub">'+i.cat.split(' ').slice(1).join(' ')+' · mín: '+i.minimo+' '+i.unidad+'</div><div style="margin-top:3px">'+(alerta?'<span class="alerta-badge">⚠️ Stock bajo</span>':'<span class="ok-badge">✅ OK</span>')+'</div></div><div class="inv-stock"><button class="stock-btn stock-minus" onclick="actualizarStock(\''+i.id+'\',-1)">−</button><span class="stock-num" style="color:'+(alerta?'var(--red)':'#7A5A7A')+'">'+i.stock+'</span><button class="stock-btn stock-plus" onclick="actualizarStock(\''+i.id+'\',1)">+</button></div><button class="delete-btn" onclick="eliminar(\'insumos\',\''+i.id+'\')">🗑️</button></div>';
+  }).join('');
+}
+
+// ── AGENDA ──
+function agregarEvento(){
+  var titulo=document.getElementById('ev-titulo').value.trim();
+  var fecha=document.getElementById('ev-fecha').value;
+  var hora=document.getElementById('ev-hora').value;
+  var tipo=document.getElementById('ev-tipo').value;
+  var notas=document.getElementById('ev-notas').value;
+  if(!titulo||!fecha)return alert('Completa título y fecha 💕');
+  db.collection('eventos').add({titulo:titulo,fecha:fecha,hora:hora,tipo:tipo,notas:notas,ts:ts()})
+  .then(function(){['ev-titulo','ev-fecha','ev-hora','ev-notas'].forEach(function(id){document.getElementById(id).value='';});showToast('📅 Evento guardado ☁️');});
+}
+
+function renderEventos(diaFiltro){
+  var el=document.getElementById('eventos-list');
+  var titulo=document.getElementById('agenda-list-title');
+  var now=new Date(); now.setHours(0,0,0,0);
+  var filtered;
+  if(diaFiltro){
+    filtered=cache.eventos.filter(function(e){return e.fecha===diaFiltro;});
+    titulo.textContent='📋 Eventos del '+fmtDate(diaFiltro);
+  } else {
+    filtered=cache.eventos.filter(function(e){return new Date(e.fecha)>=now;}).slice(0,10);
+    titulo.textContent='📋 Próximos eventos';
+  }
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="e-icon">📅</div><p>'+(diaFiltro?'Sin eventos este día':'Sin eventos próximos')+'</p></div>';return;}
+  el.innerHTML=filtered.map(function(e){
+    var col=EV_COLS[e.tipo]||'#FFB6C8';
+    return '<div class="evento-item"><div class="evento-dot" style="background:'+col+'"></div><div class="evento-info"><div class="evento-name">'+e.titulo+'</div><div class="evento-sub">'+e.tipo+' · '+fmtDate(e.fecha)+(e.hora?' · '+e.hora:'')+'</div>'+(e.notas?'<div class="item-sub">'+e.notas.substring(0,50)+'</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'eventos\',\''+e.id+'\')">🗑️</button></div>';
+  }).join('');
+}
+
+function cambiarMes(delta){calMonth+=delta;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendario();}
+
+function renderCalendario(){
+  document.getElementById('cal-titulo').textContent=MESES[calMonth]+' '+calYear;
+  var grid=document.getElementById('cal-grid');
+  var html=DIAS.map(function(d){return '<div class="cal-header">'+d+'</div>';}).join('');
+  var first=new Date(calYear,calMonth,1).getDay();
+  var days=new Date(calYear,calMonth+1,0).getDate();
+  var today=new Date(); today.setHours(0,0,0,0);
+  var eventDays={};
+  cache.eventos.forEach(function(e){if(e.fecha)eventDays[e.fecha]=true;});
+  for(var i=0;i<first;i++) html+='<div class="cal-day other-month"></div>';
+  for(var d=1;d<=days;d++){
+    var dateStr=calYear+'-'+(calMonth+1<10?'0':'')+(calMonth+1)+'-'+(d<10?'0':'')+d;
+    var isToday=new Date(calYear,calMonth,d).getTime()===today.getTime();
+    var hasEv=eventDays[dateStr];
+    html+='<div class="cal-day'+(isToday?' today':'')+(hasEv?' has-event':'')+'" onclick="renderEventos(\''+dateStr+'\')">'+d+'</div>';
+  }
+  grid.innerHTML=html;
+}
+
 // ── HITOS ──
-var HCOLS=['#FFD6E0','#C8E6FF','#C8F0E0','#FFF3C8','#E8D6FF','#FFE0C8'];
 function agregarHito(){
   var tipo=document.getElementById('h-tipo').value;
   var desc=document.getElementById('h-desc').value.trim();
@@ -490,13 +607,12 @@ function agregarHito(){
   var edad=document.getElementById('h-edad').value.trim();
   var nota=document.getElementById('h-nota').value.trim();
   if(!fecha)return alert('Agrega la fecha 💕');
-  db.collection('hitos').add({tipo:tipo,desc:desc,fecha:fecha,edad:edad,nota:nota,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  db.collection('hitos').add({tipo:tipo,desc:desc,fecha:fecha,edad:edad,nota:nota,ts:ts()})
   .then(function(){['h-desc','h-fecha','h-edad','h-nota'].forEach(function(id){document.getElementById(id).value='';});showToast('👣 Hito guardado ☁️');});
 }
-
 function renderHitos(){
   var el=document.getElementById('hitos-list');
-  if(!cache.hitos.length){el.innerHTML='<div class="empty"><div class="e-icon">👣</div><p>¡Registra el primer hito de Renato!</p></div>';return;}
+  if(!cache.hitos.length){el.innerHTML='<div class="empty"><div class="e-icon">👣</div><p>¡Registra el primer hito!</p></div>';return;}
   el.innerHTML=cache.hitos.map(function(h,i){return '<div class="hito-item"><div class="hito-badge" style="background:'+HCOLS[i%HCOLS.length]+'">'+h.tipo.split(' ')[0]+'</div><div class="hito-info"><div class="hito-name">'+(h.desc||h.tipo.split(' ').slice(1).join(' '))+'</div><div class="hito-fecha">📅 '+fmtDate(h.fecha)+(h.edad?' · '+h.edad:'')+'</div>'+(h.nota?'<div class="hito-nota">"'+h.nota+'"</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'hitos\',\''+h.id+'\')">🗑️</button></div>';}).join('');
 }
 
@@ -510,16 +626,10 @@ function agregarMedida(){
   var nota=document.getElementById('cr-nota').value.trim();
   if(!fecha)return alert('Agrega la fecha 💕');
   if(!peso&&!talla&&!craneo)return alert('Agrega al menos una medida 💕');
-  db.collection('medidas').add({fecha:fecha,edad:edad,peso:peso,talla:talla,craneo:craneo,nota:nota,ts:firebase.firestore.FieldValue.serverTimestamp()})
+  db.collection('medidas').add({fecha:fecha,edad:edad,peso:peso,talla:talla,craneo:craneo,nota:nota,ts:ts()})
   .then(function(){['cr-fecha','cr-edad','cr-peso','cr-talla','cr-craneo','cr-nota'].forEach(function(id){document.getElementById(id).value='';});setToday('cr-fecha');showToast('📈 Medida guardada ☁️');});
 }
-
-function setCrFilter(f){
-  crFilter=f;
-  ['peso','talla','craneo'].forEach(function(k){document.getElementById('cr-btn-'+k).classList.toggle('active',k===f);});
-  dibujarGrafica();
-}
-
+function setCrFilter(f){crFilter=f;['peso','talla','craneo'].forEach(function(k){document.getElementById('cr-btn-'+k).classList.toggle('active',k===f);});dibujarGrafica();}
 function renderCrecimiento(){
   var sorted=cache.medidas.slice().sort(function(a,b){return a.fecha>b.fecha?1:-1;});
   var last=sorted[sorted.length-1];
@@ -528,14 +638,13 @@ function renderCrecimiento(){
     var prev=sorted[sorted.length-2];
     var dp=prev&&last.peso&&prev.peso?(last.peso-prev.peso).toFixed(2):null;
     var dt=prev&&last.talla&&prev.talla?(last.talla-prev.talla).toFixed(1):null;
-    resEl.innerHTML='<div class="card" style="background:linear-gradient(135deg,var(--mint),var(--blue));margin-bottom:14px"><div class="card-title"><span>📌 Última medida'+(last.edad?' · '+last.edad:'')+'</span><span style="font-size:12px;color:var(--soft)">'+fmtDate(last.fecha)+'</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">'+(last.peso?'<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:10px"><div style="font-size:22px">⚖️</div><div style="font-size:18px;font-weight:800;color:#5A7A5A">'+last.peso+' kg</div><div style="font-size:11px;color:var(--soft)">Peso'+(dp?'<span style="color:'+(dp>0?'#3A8A5A':'#8A3A3A')+'">'+(dp>0?'+':'')+dp+'kg</span>':'')+'</div></div>':'')+(last.talla?'<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:10px"><div style="font-size:22px">📏</div><div style="font-size:18px;font-weight:800;color:#5A5A7A">'+last.talla+' cm</div><div style="font-size:11px;color:var(--soft)">Talla'+(dt?'<span style="color:'+(dt>0?'#3A5A8A':'#8A3A3A')+'">'+(dt>0?'+':'')+dt+'cm</span>':'')+'</div></div>':'')+(last.craneo?'<div style="background:rgba(255,255,255,0.7);border-radius:12px;padding:10px"><div style="font-size:22px">🧠</div><div style="font-size:18px;font-weight:800;color:#7A5A7A">'+last.craneo+' cm</div><div style="font-size:11px;color:var(--soft)">Cráneo</div></div>':'')+'</div>'+(last.nota?'<div style="font-size:12px;color:#6A8A7A;margin-top:10px;font-style:italic">📝 '+last.nota+'</div>':'')+'</div>';
+    resEl.innerHTML='<div class="card" style="background:linear-gradient(135deg,var(--mint),var(--blue));margin-bottom:12px"><div class="card-title"><span>📌 Última medida'+(last.edad?' · '+last.edad:'')+'</span><span style="font-size:11px;color:var(--soft)">'+fmtDate(last.fecha)+'</span></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">'+(last.peso?'<div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:8px"><div>⚖️</div><div style="font-size:16px;font-weight:800;color:#5A7A5A">'+last.peso+'kg</div><div style="font-size:10px;color:var(--soft)">Peso'+(dp?'<span style="color:'+(dp>0?'#3A8A5A':'#8A3A3A')+'">'+(dp>0?'+':'')+dp+'</span>':'')+'</div></div>':'')+(last.talla?'<div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:8px"><div>📏</div><div style="font-size:16px;font-weight:800;color:#5A5A7A">'+last.talla+'cm</div><div style="font-size:10px;color:var(--soft)">Talla'+(dt?'<span style="color:'+(dt>0?'#3A5A8A':'#8A3A3A')+'">'+(dt>0?'+':'')+dt+'</span>':'')+'</div></div>':'')+(last.craneo?'<div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:8px"><div>🧠</div><div style="font-size:16px;font-weight:800;color:#7A5A7A">'+last.craneo+'cm</div><div style="font-size:10px;color:var(--soft)">Cráneo</div></div>':'')+'</div>'+(last.nota?'<div style="font-size:11px;color:#6A8A7A;margin-top:8px;font-style:italic">📝 '+last.nota+'</div>':'')+'</div>';
   } else {resEl.innerHTML='';}
   dibujarGrafica();
   var el=document.getElementById('cr-list');
   if(!sorted.length){el.innerHTML='<div class="empty"><div class="e-icon">📏</div><p>Sin medidas registradas</p></div>';return;}
-  el.innerHTML=sorted.slice().reverse().map(function(m){return '<div class="list-item"><div class="item-icon" style="background:var(--mint);font-size:18px">📅</div><div class="item-info"><div class="item-name">'+fmtDate(m.fecha)+(m.edad?' · '+m.edad:'')+'</div><div class="item-sub">'+(m.peso?'⚖️ '+m.peso+' kg  ':'')+( m.talla?'📏 '+m.talla+' cm  ':'')+( m.craneo?'🧠 '+m.craneo+' cm':'')+'</div>'+(m.nota?'<div class="item-sub">📝 '+m.nota+'</div>':'')+'</div><button class="delete-btn" onclick="eliminar(\'medidas\',\''+m.id+'\')">🗑️</button></div>';}).join('');
+  el.innerHTML=sorted.slice().reverse().map(function(m){return '<div class="list-item"><div class="item-icon" style="background:var(--mint);font-size:16px">📅</div><div class="item-info"><div class="item-name">'+fmtDate(m.fecha)+(m.edad?' · '+m.edad:'')+'</div><div class="item-sub">'+(m.peso?'⚖️'+m.peso+'kg  ':'')+( m.talla?'📏'+m.talla+'cm  ':'')+( m.craneo?'🧠'+m.craneo+'cm':'')+'</div></div><button class="delete-btn" onclick="eliminar(\'medidas\',\''+m.id+'\')">🗑️</button></div>';}).join('');
 }
-
 function dibujarGrafica(){
   var canvas=document.getElementById('cr-chart');
   var emptyEl=document.getElementById('cr-empty');
@@ -543,28 +652,28 @@ function dibujarGrafica(){
   var datos=sorted.filter(function(m){return m[crFilter]!==null&&m[crFilter]!==undefined;});
   if(datos.length<2){canvas.style.display='none';emptyEl.style.display='block';return;}
   canvas.style.display='block';emptyEl.style.display='none';
-  var labels=datos.map(function(m){return fmtDate(m.fecha);});
   var values=datos.map(function(m){return m[crFilter];});
+  var labels=datos.map(function(m){return fmtDate(m.fecha);});
   var colors={peso:'#FFB6C8',talla:'#A8D8FF',craneo:'#C8A8FF'};
-  var fills={peso:'rgba(255,182,200,0.18)',talla:'rgba(168,216,255,0.18)',craneo:'rgba(200,168,255,0.18)'};
+  var fills={peso:'rgba(255,182,200,0.15)',talla:'rgba(168,216,255,0.15)',craneo:'rgba(200,168,255,0.15)'};
   var units={peso:'kg',talla:'cm',craneo:'cm'};
   var ctx=canvas.getContext('2d');
-  var pad={top:20,right:20,bottom:40,left:44};
-  var W=canvas.offsetWidth||300;canvas.width=W;canvas.height=220;
+  var pad={top:18,right:16,bottom:36,left:40};
+  var W=canvas.offsetWidth||300;canvas.width=W;canvas.height=200;
   var H=canvas.height,cW=W-pad.left-pad.right,cH=H-pad.top-pad.bottom;
   ctx.clearRect(0,0,W,H);
   var minV=Math.min.apply(null,values)*0.97,maxV=Math.max.apply(null,values)*1.03,range=maxV-minV||1;
   function toX(i){return pad.left+(i/(datos.length-1))*cW;}
   function toY(v){return pad.top+cH-((v-minV)/range)*cH;}
   ctx.strokeStyle='#F0E0F0';ctx.lineWidth=1;
-  for(var t=0;t<=4;t++){var y=pad.top+(t/4)*cH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cW,y);ctx.stroke();ctx.fillStyle='#BAA0BA';ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText((maxV-(t/4)*range).toFixed(crFilter==='peso'?2:1),pad.left-4,y+4);}
+  for(var t=0;t<=4;t++){var y=pad.top+(t/4)*cH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cW,y);ctx.stroke();ctx.fillStyle='#BAA0BA';ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillText((maxV-(t/4)*range).toFixed(crFilter==='peso'?2:1),pad.left-3,y+3);}
   ctx.beginPath();ctx.moveTo(toX(0),toY(values[0]));values.forEach(function(v,i){if(i>0)ctx.lineTo(toX(i),toY(v));});
   ctx.lineTo(toX(values.length-1),pad.top+cH);ctx.lineTo(toX(0),pad.top+cH);ctx.closePath();ctx.fillStyle=fills[crFilter];ctx.fill();
   ctx.beginPath();ctx.moveTo(toX(0),toY(values[0]));values.forEach(function(v,i){if(i>0)ctx.lineTo(toX(i),toY(v));});
   ctx.strokeStyle=colors[crFilter];ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
-  values.forEach(function(v,i){var x=toX(i),y=toY(v);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=colors[crFilter];ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle='#7A5A7A';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(v+units[crFilter],x,y-10);});
-  ctx.fillStyle='#BAA0BA';ctx.font='10px sans-serif';ctx.textAlign='center';
-  labels.forEach(function(l,i){ctx.fillText(l,toX(i),H-8);});
+  values.forEach(function(v,i){var x=toX(i),y=toY(v);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle=colors[crFilter];ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#7A5A7A';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillText(v+units[crFilter],x,y-8);});
+  ctx.fillStyle='#BAA0BA';ctx.font='9px sans-serif';ctx.textAlign='center';
+  labels.forEach(function(l,i){ctx.fillText(l,toX(i),H-6);});
 }
 
 // ── DASHBOARD ──
@@ -573,23 +682,28 @@ function renderDashboard(){
   var totalMes=cache.gastos.filter(function(g){if(!g.fecha)return false;var d=new Date(g.fecha);return d.getMonth()===mes&&d.getFullYear()===año;}).reduce(function(a,g){return a+g.monto;},0);
   document.getElementById('dash-total').textContent=fmtMoney(totalMes);
   document.getElementById('dash-citas').textContent=cache.citas.length;
-  document.getElementById('dash-docs').textContent=cache.docs.length;
-  document.getElementById('dash-fotos').textContent=cache.fotos.length;
   document.getElementById('dash-hitos').textContent=cache.hitos.length;
-  document.getElementById('dash-medidas').textContent=cache.medidas.length;
-  var gl=document.getElementById('dash-gastos-list');
-  gl.innerHTML=cache.gastos.slice(0,3).map(function(g){return '<div class="list-item" style="cursor:default;margin-bottom:8px"><div class="item-icon" style="background:var(--yellow);font-size:18px">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name" style="font-size:13px">'+g.desc+'</div><div class="item-sub">'+fmtDate(g.fecha)+'</div></div><div class="item-amount" style="font-size:14px">'+fmtMoney(g.monto)+'</div></div>';}).join('')||'<div class="empty"><div class="e-icon">🛒</div><p>Sin gastos aún</p></div>';
-  var prox=cache.citas.find(function(c){return new Date(c.fecha)>=now;});
-  document.getElementById('dash-proxima').innerHTML=prox?'<div class="list-item" style="cursor:default"><div class="item-icon" style="background:var(--blue)">'+prox.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+prox.doctor+'</div><div class="item-sub">'+prox.tipo+' · '+fmtDate(prox.fecha)+'</div></div></div>':'<div class="empty"><div class="e-icon">📅</div><p>Sin próximas citas</p></div>';
-  var uh=cache.hitos[0];
-  document.getElementById('dash-hito-last').innerHTML=uh?'<div class="hito-item"><div class="hito-badge" style="background:var(--purple)">'+uh.tipo.split(' ')[0]+'</div><div class="hito-info"><div class="hito-name">'+(uh.desc||uh.tipo.split(' ').slice(1).join(' '))+'</div><div class="hito-fecha">📅 '+fmtDate(uh.fecha)+(uh.edad?' · '+uh.edad:'')+'</div></div></div>':'<div class="empty"><div class="e-icon">👣</div><p>Sin hitos aún</p></div>';
+  var alertas=cache.insumos.filter(function(i){return i.stock<=i.minimo;});
+  var ok=cache.insumos.filter(function(i){return i.stock>i.minimo;});
+  document.getElementById('dash-inv-ok').textContent=ok.length;
+  document.getElementById('dash-inv-alerta').textContent=alertas.length;
+  var proxEventos=cache.eventos.filter(function(e){return new Date(e.fecha)>=now;});
+  document.getElementById('dash-eventos').textContent=proxEventos.length;
+
+  // Banner alertas insumos
+  var bannerEl=document.getElementById('dash-alertas');
+  bannerEl.innerHTML=alertas.length?'<div class="alerta-banner"><div class="ab-icon">⚠️</div><div class="ab-text">'+alertas.length+' insumo'+(alertas.length>1?'s':'')+' con stock bajo: '+alertas.map(function(i){return i.nombre+'('+i.stock+')';}).join(', ')+'</div></div>':'';
+
+  document.getElementById('dash-gastos-list').innerHTML=cache.gastos.slice(0,3).map(function(g){return '<div class="list-item" style="cursor:default;margin-bottom:6px"><div class="item-icon" style="background:var(--yellow);font-size:16px">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name" style="font-size:12px">'+g.desc+'</div><div class="item-sub">'+fmtDate(g.fecha)+'</div></div><div class="item-amount" style="font-size:13px">'+fmtMoney(g.monto)+'</div></div>';}).join('')||'<div class="empty"><div class="e-icon">🛒</div><p>Sin gastos aún</p></div>';
+
+  var prox=cache.eventos.filter(function(e){return new Date(e.fecha)>=now;}).slice(0,3);
+  document.getElementById('dash-eventos-list').innerHTML=prox.map(function(e){return '<div class="list-item" style="cursor:default"><div class="item-icon" style="background:var(--blue)">'+e.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+e.titulo+'</div><div class="item-sub">'+fmtDate(e.fecha)+(e.hora?' · '+e.hora:'')+'</div></div></div>';}).join('')||'<div class="empty"><div class="e-icon">📅</div><p>Sin eventos próximos</p></div>';
+
+  document.getElementById('dash-inv-list').innerHTML=alertas.slice(0,3).map(function(i){return '<div class="list-item" style="cursor:default"><div class="item-icon" style="background:#FFE0E0">'+i.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+i.nombre+'</div><div class="item-sub">Stock: '+i.stock+' · Mínimo: '+i.minimo+' '+i.unidad+'</div></div><span class="alerta-badge">⚠️ Bajo</span></div>';}).join('')||'<div class="empty"><div class="e-icon">✅</div><p>Todos los insumos en orden</p></div>';
 }
 
 // ── ELIMINAR ──
-function eliminar(col,id){
-  if(!confirm('¿Eliminar este registro? 🥺'))return;
-  db.collection(col).doc(id).delete().then(function(){showToast('🗑️ Eliminado');});
-}
+function eliminar(col,id){if(!confirm('¿Eliminar este registro? 🥺'))return;db.collection(col).doc(id).delete().then(function(){showToast('🗑️ Eliminado');});}
 
 // ── PDF GASTOS ──
 function exportarPDF(){
@@ -616,8 +730,6 @@ function exportarPDF(){
   pdoc.text('Total: '+fmtMoney(filtered.reduce(function(a,g){return a+g.monto;},0)),W-margin,y,{align:'right'});
   pdoc.save('MundoRenato_Gastos.pdf');
 }
-
-// ── PDF HITOS ──
 function exportarHitosPDF(){
   var j=window.jspdf,pdoc=new j.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   var W=210,margin=15,y=20;
@@ -633,19 +745,16 @@ function exportarHitosPDF(){
     pdoc.setFontSize(16);pdoc.text(h.tipo.split(' ')[0],margin+6,y+12);
     pdoc.setFont('helvetica','bold');pdoc.setFontSize(11);pdoc.setTextColor(90,74,90);pdoc.text(nombre,margin+18,y+9);
     pdoc.setFont('helvetica','normal');pdoc.setFontSize(9);pdoc.setTextColor(130,110,130);pdoc.text(fmtDate(h.fecha)+(h.edad?' · '+h.edad:''),margin+18,y+16);
-    if(h.nota){pdoc.setFontSize(8.5);pdoc.setTextColor(120,100,120);pdoc.text('"'+h.nota.substring(0,80)+(h.nota.length>80?'...:':'')+'"',margin+18,y+23);}
+    if(h.nota){pdoc.setFontSize(8.5);pdoc.setTextColor(120,100,120);pdoc.text('"'+h.nota.substring(0,80)+'"',margin+18,y+23);}
     y+=(h.nota?32:26);
   });
   pdoc.save('MundoRenato_Hitos.pdf');
 }
 
-// ── INIT ──
-['g-fecha','d-fecha','f-fecha','h-fecha','cr-fecha'].forEach(setToday);
+// INIT
+['g-fecha','d-fecha','f-fecha','h-fecha','cr-fecha','ev-fecha'].forEach(setToday);
 document.getElementById('c-fecha').value=new Date().toISOString().slice(0,16);
+renderCalendario();
 </script>
 </body>
 </html>
-  
-   
- 
- 
