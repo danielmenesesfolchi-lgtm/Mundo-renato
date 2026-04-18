@@ -773,6 +773,15 @@ function renderDashboard(){
 
   document.getElementById('dash-gastos-list').innerHTML=cache.gastos.slice(0,3).map(function(g){return '<div class="list-item" style="cursor:default;margin-bottom:6px"><div class="item-icon" style="background:var(--yellow);font-size:16px">'+g.cat.split(' ')[0]+'</div><div class="item-info"><div class="item-name" style="font-size:12px">'+g.desc+'</div><div class="item-sub">'+fmtDate(g.fecha)+'</div></div><div class="item-amount" style="font-size:13px">'+fmtMoney(g.monto)+'</div></div>';}).join('')||'<div class="empty"><div class="e-icon">🛒</div><p>Sin gastos aún</p></div>';
 
+  // Alerta citas mañana
+  var manana=new Date(now); manana.setDate(manana.getDate()+1);
+  var mananaStr=manana.toISOString().split('T')[0];
+  var citasManana=cache.citas.filter(function(c){return c.fecha&&c.fecha.split('T')[0]===mananaStr;});
+  var alertasCitas=document.getElementById('dash-alertas');
+  var bannerInsumos=alertas.length?'<div class="alerta-banner"><div class="ab-icon">⚠️</div><div class="ab-text">'+alertas.length+' insumo'+(alertas.length>1?'s':'')+' con stock bajo: '+alertas.map(function(i){return i.nombre+'('+i.stock+')';}).join(', ')+'</div></div>':'';
+  var bannerCitas=citasManana.length?'<div class="alerta-banner" style="background:linear-gradient(135deg,#FFF3C8,#FFE0C8)"><div class="ab-icon">🏥</div><div class="ab-text" style="color:#7A5A2A">Cita mañana: '+citasManana.map(function(c){return c.doctor+(c.hora?' a las '+c.hora:'');}).join(' / ')+'</div></div>':'';
+  alertasCitas.innerHTML=bannerInsumos+bannerCitas;
+
   var prox=cache.eventos.filter(function(e){return new Date(e.fecha)>=now;}).slice(0,3);
   document.getElementById('dash-eventos-list').innerHTML=prox.map(function(e){return '<div class="list-item" style="cursor:default"><div class="item-icon" style="background:var(--blue)">'+e.tipo.split(' ')[0]+'</div><div class="item-info"><div class="item-name">'+e.titulo+'</div><div class="item-sub">'+fmtDate(e.fecha)+(e.hora?' · '+e.hora:'')+'</div></div></div>';}).join('')||'<div class="empty"><div class="e-icon">📅</div><p>Sin eventos próximos</p></div>';
 
